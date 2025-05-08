@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 Player::Player(const std::string& name)
-    : active(true), extra_turn(false), coins(5), name(name),sanction_indicator({false,nullptr}) {}
+    : active(true), extra_turn(false), coins(5), name(name),actions_indicator(Actions::NumsAction,{false,nullptr}) {}
 
 Player::Player(const Player& other) {
     this->active = other.active;
@@ -33,6 +33,7 @@ std::string Player::get_name() const {
 int Player::get_coins() const {
     return this->coins;
 }
+
 
 bool Player::get_active() const {
     return this->active;
@@ -130,13 +131,12 @@ void Player::clear_blocked_action(Actions act){
 }
 
 
-void Player::set_has_sanctioned(bool value,Player *player){
-    this->sanction_indicator.first = value;
-    this->sanction_indicator.second = player;
+void Player::set_action_indicator(Actions action,bool value,Player *player){
+    this->actions_indicator[action] = {value,player};
 }
 
-pair<bool,Player*>& Player::get_has_sanctioned(){
-    return this->sanction_indicator;
+vector<pair<bool,Player*>>& Player::get_action_indicator(){
+    return this->actions_indicator;
 }
 
 void Player::set_has_extra_turn(bool val){

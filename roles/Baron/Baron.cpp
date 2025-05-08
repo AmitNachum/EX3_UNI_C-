@@ -15,6 +15,7 @@ void Baron::gather(){
     if(this->is_blocked(Actions::Gather)){
             std::cout << "Gather is blocked" <<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
     }   
     
@@ -45,6 +46,7 @@ void Baron::tax(){
     if(this->is_blocked(Actions::Tax)){
             std::cout << "Tax is blocked" <<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
     }   
 
@@ -85,8 +87,8 @@ void Baron::bribe(){
 
         if(this->is_blocked(Actions::Bribe)){
             std::cout <<"Bribe has been Blocked"<<std::endl;
-            game.next_turn();
             this->clear_blocked();
+            game.next_turn();
             return;
         }
 
@@ -150,7 +152,7 @@ void Baron::sanction(Player &player){
 
     player.block_action(Actions::Gather);
     player.block_action(Actions::Tax);
-    player.set_has_sanctioned(true,this);
+    player.set_action_indicator(Actions::Sanction,true,this);
     
 
     game.next_turn();
@@ -221,8 +223,9 @@ void Baron::invest(){
 }
 
 void Baron::handle_sanction_bonus() {
-    if (this->get_has_sanctioned().first) {
+    if (this->get_action_indicator()[Actions::Sanction].first) {
         this->add_coins(1);
-        this->get_has_sanctioned().first = false;
+        this->get_action_indicator()[Actions::Sanction].first = false;
+        this->get_action_indicator()[Actions::Sanction].second = nullptr;
     }
 }

@@ -127,7 +127,7 @@ void Governor::sanction(Player &player){
     
     player.block_action(Actions::Gather);
     player.block_action(Actions::Tax);
-    player.set_has_sanctioned(true,this);
+    player.set_action_indicator(Actions::Sanction,true,this);
 
     game.next_turn();
 

@@ -40,13 +40,13 @@ class Judge : public Player {
     Game& get_game();
 
 
-    void handle_sanctions(std::pair<bool, Player*>& pair){
-        if (!pair.first || pair.second == nullptr) return;
+    void handle_sanctions(){
+        if (!(this->get_action_indicator()[Sanction].first) || this->get_action_indicator()[Sanction].second == nullptr) return;
     
-        pair.second->set_has_extra_turn(false);
+        this->get_action_indicator()[Sanction].second->set_has_extra_turn(false);
         std::cout << "Sanction has been canceled by the Judge" << std::endl;
     
-        pair = {false, nullptr}; 
+        this->get_action_indicator()[Sanction] = {false, nullptr}; 
     }
     
 

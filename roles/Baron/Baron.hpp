@@ -25,7 +25,6 @@ class Baron: public Player {
         Player::operator=(other);
         this->name = other.name;
 
-        
 
         return *this;
     }

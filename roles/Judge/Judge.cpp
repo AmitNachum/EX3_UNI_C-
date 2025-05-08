@@ -4,7 +4,7 @@
 
 
 void Judge::gather(){
-    handle_sanctions(this->sanction_indicator);
+    handle_sanctions();
 
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
@@ -15,6 +15,7 @@ void Judge::gather(){
     if(this->is_blocked(Actions::Gather)){
             std::cout << "Gather is blocked" <<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
     }   
 
@@ -34,7 +35,7 @@ void Judge::gather(){
 
 
 void Judge::tax(){
-    handle_sanctions(this->sanction_indicator);
+    handle_sanctions();
 
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
@@ -64,7 +65,7 @@ void Judge::tax(){
 
 
 void Judge::bribe(){
-    handle_sanctions(this->sanction_indicator);
+    handle_sanctions();
 
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
@@ -95,7 +96,7 @@ void Judge::bribe(){
 }
 
 void Judge::arrest(Player &player){
-    handle_sanctions(this->sanction_indicator);
+    handle_sanctions();
 
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
@@ -125,7 +126,7 @@ game.next_turn();
 
 
 void Judge::sanction(Player &player){
-    handle_sanctions(this->sanction_indicator);
+    handle_sanctions();
 
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
@@ -150,14 +151,14 @@ game.get_pool() += 3;
 
 player.block_action(Actions::Gather);
 player.block_action(Actions::Tax);
-player.set_has_sanctioned(true,this);
+player.set_action_indicator(Actions::Sanction,true,this);
 
 
 game.next_turn();
 }
 
 void Judge::coup(Player& player){
-    handle_sanctions(this->sanction_indicator);
+    handle_sanctions();
 
     if(game.current_player() != this) 
         throw std::runtime_error("Not the Judge's turn");

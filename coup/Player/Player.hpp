@@ -16,7 +16,8 @@ enum Actions {
     Bribe,
     Arrest,
     Sanction,
-    Coup
+    Coup,
+    NumsAction //size of the vector
 };
 
 class Player{
@@ -28,7 +29,7 @@ class Player{
     int coins;
     vector<std::string> arrested_names;
     std::string name;
-    pair<bool,Player*> sanction_indicator;
+    std::vector<pair<bool,Player*>> actions_indicator;
 
     public:
 
@@ -55,8 +56,8 @@ class Player{
     void set_free_arrested(Player &Player);
     vector<std::string>& get_arrested();
     void clear_blocked_action(Actions act);
-    void set_has_sanctioned(bool value,Player *player);
-    pair<bool,Player *>& get_has_sanctioned();
+    void set_action_indicator(Actions action,bool value,Player *player);
+    vector<pair<bool,Player *>>& get_action_indicator();
     
     
 
