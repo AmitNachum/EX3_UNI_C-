@@ -111,3 +111,28 @@ vector<Player*> Game::get_players(){
     return this->players;
 }
 
+void Game::notify_general_coup(Player &target,Player &executioner){
+    for (Player* p : players) {
+        if(!(p->get_active())) continue;
+        if( p == &executioner && p != &target) continue;
+
+
+        if (p->get_role_name() == "General") {
+            General* general = dynamic_cast<General*>(p);
+            
+            if (general != nullptr) {
+                std::cout << "General " << general->get_name()
+                          << ", do you want to prevent a coup on " << target.get_name()
+                          << "? (y/n): ";
+                char choice;
+                std::cin >> choice;
+                choice = std::tolower(choice);
+                if (choice == 'y') {
+                general->prevent_coup(target);
+                }
+                          
+            }
+        }
+    }
+    
+}

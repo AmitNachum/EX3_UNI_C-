@@ -17,12 +17,7 @@ class Governor:public Player{
 
     Governor(const Governor& other): Player(other.name),game(other.game){};
 
-    Governor &operator=(const Governor &other){
-        if(this == &other) return *this;
-        
-        Player::operator=(other);
-        return *this;
-    }
+    Governor &operator=(const Governor &other) = delete;
 
      void gather() override;
      void tax() override;

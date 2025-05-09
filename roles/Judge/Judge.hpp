@@ -18,16 +18,7 @@ class Judge : public Player {
     Judge(const std::string& name,Game &game) : Player(name),game(game){};
     ~Judge(){};
     Judge(const Judge &other):Player(other),game(other.game){};
-    Judge &operator=(const Judge& other){
-        
-        if(this == &other) return *this;
-
-        Player::operator=(other);
-
-        this->name = other.name;
-
-        return *this;
-    }
+    Judge &operator=(const Judge& other) = delete;
 
     void gather() override;
     void tax() override;

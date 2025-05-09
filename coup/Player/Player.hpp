@@ -20,6 +20,8 @@ enum Actions {
     NumsAction //size of the vector
 };
 
+class Game;
+
 class Player{
 
     protected:
@@ -58,6 +60,8 @@ class Player{
     void clear_blocked_action(Actions act);
     void set_action_indicator(Actions action,bool value,Player *player);
     vector<pair<bool,Player *>>& get_action_indicator();
+    void set_active(bool val);
+    
     
     
 

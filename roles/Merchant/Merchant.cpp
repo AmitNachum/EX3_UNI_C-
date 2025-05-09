@@ -6,6 +6,7 @@ void Merchant::handle_discount(){
     }
 }
 
+
 void Merchant::handle_arrest(){
     std::vector<std::pair<bool,Player*>>& actionID= this->get_action_indicator();
     if(!(actionID[Actions::Arrest].first) || actionID[Actions::Arrest].second == nullptr) return;
@@ -17,6 +18,11 @@ void Merchant::handle_arrest(){
 
     actionID[Actions::Arrest] = {false,nullptr};
 
+}
+
+void Merchant::handle_passive_effects() {
+    handle_discount();
+    handle_arrest();
 }
 
 void Merchant::gather(){
@@ -75,6 +81,7 @@ void Merchant::tax(){
         this->clear_extra_turn();
         return;
     }
+
     game.next_turn();
 
 }
@@ -89,7 +96,7 @@ void Merchant::bribe(){
 
     if(this->get_coins()  < 4) 
         throw std::runtime_error("Not enough Money to bribe");
-        
+
     if(this->is_blocked(Actions::Bribe)){
             std::cout <<"Bribe has been Blocked"<<std::endl;
             game.next_turn();
@@ -101,8 +108,6 @@ void Merchant::bribe(){
 
     this->game.get_pool() += 4;
     this->reduce_coins(4);
-
-
 
 
 
@@ -140,8 +145,48 @@ handle_passive_effects();
 player.reduce_coins(1);
 this->add_coins(1);
 
+if(this->has_extra_turn()){
+    this->clear_extra_turn();
+    return;
+}
+
 game.next_turn();
 
+}
+
+
+void Merchant::sanction(Player &player){
+    if(game.current_player() != this) 
+        throw std::runtime_error("Not the Merchant's turn");
+
+    if(this->get_coins() >= 10) 
+        throw std::runtime_error("You must coup when holding 10 or more coins.");
+
+    if(this->get_coins()  < 3) 
+        throw std::runtime_error("Not enough Money to sanction");
+
+    if(this == &player)
+        throw std::runtime_error("You cannot sanction yourself");
+    
+
+
+
+
+
+this->reduce_coins(3);
+game.get_pool() += 3;
+
+player.block_action(Actions::Gather);
+player.block_action(Actions::Tax);
+player.set_action_indicator(Actions::Sanction,true,this);
+
+
+if(this->has_extra_turn()){
+    this->clear_extra_turn();
+    return;
+}
+
+game.next_turn();
 }
 
 
@@ -161,16 +206,30 @@ void Merchant::coup(Player& player){
     if(this->get_coins() < 7) 
         throw std::runtime_error("Not enough Money to coup "+player.get_name());
 
- handle_passive_effects();
+    handle_passive_effects();
 
 
-
-
-    player.eliminate();
 
     this->reduce_coins(7);
-    game.get_pool() +=7;
+    game.get_pool() += 7; 
+    player.set_action_indicator(Actions::Coup, true, this);
+    this->game.notify_general_coup(player,*this);
+    
+   
 
+    if (player.get_action_indicator()[Actions::Coup].first) {    // 3. No general prevented it
+        player.eliminate();                                      //    Now we eliminate the target
+    } else {
+        std::cout << "🛡️ Coup against " << player.get_name() << " was prevented by a General." << std::endl;
+    }
+
+
+
+
+    if(this->has_extra_turn()){
+        this->clear_extra_turn();
+        return;
+    }
 
     game.next_turn();
 }

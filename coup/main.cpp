@@ -1,9 +1,7 @@
 #include "Game/Game.hpp"
 #include "../roles/Governor/Governor.hpp"
-#include "../roles/Judge/Judge.hpp"
-#include "../roles/Baron/Baron.hpp"
+#include "../roles/General/General.hpp"
 #include <iostream>
-#include <memory>
 #include <thread>
 #include <chrono>
 
@@ -27,72 +25,92 @@ Player* get_coup_target(Player* current, const vector<Player*>& players) {
 int main() {
     Game game;
 
+    auto* general1 = new General("Arthur", game);
+    auto* general2 = new General("Elaine", game);
     auto* gov = new Governor("Moshe", game);
-    auto* judge = new Judge("Sarah", game);
-    auto* baron = new Baron("Elie", game);
 
+    game.add_player(general1);
+    game.add_player(general2);
     game.add_player(gov);
-    game.add_player(judge);
-    game.add_player(baron);
 
     int turn_count = 1;
 
     try {
         while (game.active_players().size() > 1 && turn_count <= 1000) {
             Player* current = game.current_player();
-            cout << "--- Turn " << turn_count << ": " << current->get_name() << " (" << current->get_role_name() << ") ---" << endl;
+            cout << "\n--- Turn " << turn_count << ": " << current->get_name()
+                 << " (" << current->get_role_name() << ") ---" << endl;
 
             try {
                 Player* target = get_coup_target(current, game.get_players());
 
                 if (current->get_coins() >= 10 && target) {
+                    cout << current->get_name() << " used COUP on " << target->get_name() << endl;
+                    bool alive_before = target->get_active();
                     current->coup(*target);
+                    if (target->get_active() && !alive_before) {
+                        cout << "✅ " << target->get_name() << " was saved by a General!\n";
+                    } else if (!target->get_active()) {
+                        cout << "💀 " << target->get_name() << " has been eliminated.\n";
+                    }
                 }
                 else if (auto* g = dynamic_cast<Governor*>(current)) {
                     if (g->get_coins() >= 7 && target) {
+                        cout << g->get_name() << " used COUP on " << target->get_name() << endl;
+                        bool alive_before = target->get_active();
                         g->coup(*target);
+                        if (target->get_active() && !alive_before) {
+                            cout << "✅ " << target->get_name() << " was saved by a General!\n";
+                        } else if (!target->get_active()) {
+                            cout << "💀 " << target->get_name() << " has been eliminated.\n";
+                        }
                     } else if (g->get_coins() >= 4) {
+                        cout << g->get_name() << " used BRIBE" << endl;
                         g->bribe();
                     } else {
+                        cout << g->get_name() << " used GATHER" << endl;
                         g->gather();
                     }
-                } else if (auto* j = dynamic_cast<Judge*>(current)) {
-                    if (j->get_coins() >= 3) {
-                        j->tax();
+                }
+                else if (auto* gen = dynamic_cast<General*>(current)) {
+                    if (gen->get_coins() >= 7 && target) {
+                        cout << gen->get_name() << " used COUP on " << target->get_name() << endl;
+                        bool alive_before = target->get_active();
+                        gen->coup(*target);
+                        if (target->get_active() && !alive_before) {
+                            cout << "✅ " << target->get_name() << " was saved by a General!\n";
+                        } else if (!target->get_active()) {
+                            cout << "💀 " << target->get_name() << " has been eliminated.\n";
+                        }
+                    } else if (gen->get_coins() >= 3) {
+                        cout << gen->get_name() << " used TAX" << endl;
+                        gen->tax();
                     } else {
-                        j->gather();
-                    }
-                } else if (auto* b = dynamic_cast<Baron*>(current)) {
-                    if (b->get_coins() >= 7 && target) {
-                        b->coup(*target);
-                    } else if (b->get_coins() >= 3) {
-                        b->tax();
-                    } else {
-                        b->gather();
+                        cout << gen->get_name() << " used GATHER" << endl;
+                        gen->gather();
                     }
                 }
+
             } catch (const std::exception& ex) {
                 cout << "Exception: " << ex.what() << endl;
-                game.next_turn(); // prevent freeze
+                game.next_turn(); // Skip on error
             }
 
             print_balances(game);
             turn_count++;
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1500));
         }
 
         if (turn_count > 1000) {
             cout << "\n=== GAME TIMEOUT: Too many turns ===" << endl;
         } else {
             cout << "\n=== GAME OVER ===" << endl;
-            cout << "Winner: " << game.winner() << endl;
+            cout << "🏆 Winner: " << game.winner() << endl;
         }
 
     } catch (const std::exception& e) {
         cout << "Fatal Error: " << e.what() << endl;
     }
-
 
     return 0;
 }

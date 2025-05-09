@@ -6,10 +6,13 @@ INCLUDES = -I./coup -I./roles
 
 SRC = coup/main.cpp \
       coup/Game/Game.cpp \
+      coup/Player/Player.cpp \
       roles/Governor/Governor.cpp \
-	  roles/Judge/Judge.cpp \
-	  roles/Baron/Baron.cpp \
-	  coup/Player/Player.cpp
+      roles/Judge/Judge.cpp \
+      roles/Baron/Baron.cpp \
+      roles/General/General.cpp \
+      roles/Spy/Spy.cpp \
+      roles/Merchant/Merchant.cpp
 
 OBJ = $(SRC:.cpp=.o)
 EXEC = main

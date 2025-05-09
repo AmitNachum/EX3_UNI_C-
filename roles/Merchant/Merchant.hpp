@@ -15,13 +15,7 @@ class Merchant : public Player{
     Merchant(const std::string &name,Game &game): Player(name),game(game){};
     ~Merchant(){};
     Merchant(const Merchant& other):Player(other),game(other.game){};
-    Merchant& operator=(const Merchant& other){
-        if(this == &other) return (*this);
-
-        Player::operator=(other);
-        this->name = other.name;
-
-    }
+    Merchant& operator=(const Merchant& other) = delete;
 
     void gather() override;
     void tax() override;
@@ -33,10 +27,7 @@ class Merchant : public Player{
     std::string get_role_name() const override;
     void handle_discount();
     void handle_arrest();
-    void Merchant::handle_passive_effects() {
-        handle_discount();
-        handle_arrest();
-    }
+    void handle_passive_effects();
     
 
 

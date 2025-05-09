@@ -117,11 +117,23 @@ void Baron::arrest(Player &player){
 
     if (player.get_coins() < 1) 
         throw std::runtime_error(player.get_name() + " has no coins to steal");
+    
+    if(this->is_blocked(Actions::Arrest)){
+            std::cout <<"Arrest has been Blocked"<<std::endl;
+            game.next_turn();
+            this->clear_blocked();
+            return;
+    }    
 
     this->handle_sanction_bonus();
 
     player.reduce_coins(1);
     this->add_coins(1);
+
+    if(this->has_extra_turn()){
+        this->clear_extra_turn();
+        return;
+    }
 
     game.next_turn();
 
@@ -155,6 +167,11 @@ void Baron::sanction(Player &player){
     player.set_action_indicator(Actions::Sanction,true,this);
     
 
+    if(this->has_extra_turn()){
+        this->clear_extra_turn();
+        return;
+    }
+
     game.next_turn();
 
 
@@ -175,16 +192,30 @@ void Baron::coup(Player &player){
     
     if(this->get_coins() < 7) 
         throw std::runtime_error("Not enough Money to coup "+player.get_name());
+    
 
 
     this->handle_sanction_bonus();
 
-
-    player.eliminate();
-    
     this->reduce_coins(7);
-    game.get_pool() +=7;
+    game.get_pool() += 7; 
+    player.set_action_indicator(Actions::Coup, true, this);
+    this->game.notify_general_coup(player,*this);
+    
+   
 
+    if (player.get_action_indicator()[Actions::Coup].first) {    // 3. No general prevented it
+        player.eliminate();                                      //    Now we eliminate the target
+    } else {
+        std::cout << "🛡️ Coup against " << player.get_name() << " was prevented by a General." << std::endl;
+    }
+    
+
+
+    if(this->has_extra_turn()){
+        this->clear_extra_turn();
+        return;
+    }
 
     game.next_turn();
 }
@@ -219,6 +250,13 @@ void Baron::invest(){
 
     this->add_coins(3);
     game.get_pool() -= 3;
+
+    if(this->has_extra_turn()){
+        this->clear_extra_turn();
+        return;
+    }
+
+    game.next_turn();
 
 }
 

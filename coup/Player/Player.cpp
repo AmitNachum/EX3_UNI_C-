@@ -139,6 +139,11 @@ vector<pair<bool,Player*>>& Player::get_action_indicator(){
     return this->actions_indicator;
 }
 
+void Player::set_active(bool val){
+    this->active = val;
+}
+
+
 void Player::set_has_extra_turn(bool val){
     this->extra_turn = val;
 }
