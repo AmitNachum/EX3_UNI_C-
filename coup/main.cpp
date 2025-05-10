@@ -1,9 +1,10 @@
 #include "Game/Game.hpp"
-#include "../roles/Governor/Governor.hpp"
-#include "../roles/General/General.hpp"
+#include "Role/Factory/Factory.hpp"
+#include "Role/Strategy/Strategy.hpp"
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <unordered_map>
 
 using namespace std;
 
@@ -25,13 +26,20 @@ Player* get_coup_target(Player* current, const vector<Player*>& players) {
 int main() {
     Game game;
 
-    auto* general1 = new General("Arthur", game);
-    auto* general2 = new General("Elaine", game);
-    auto* gov = new Governor("Moshe", game);
+    // 🏭 Factory-created players (AI or Human)
+    Player* arthur = FactoryPlayers::createPlayer(ROLE_GENERAL, "Arthur", game, true);  // AI
+    Player* elaine = FactoryPlayers::createPlayer(ROLE_GENERAL, "Elaine", game, true);  // AI
+    Player* moshe  = FactoryPlayers::createPlayer(ROLE_GOVERNOR, "Moshe", game, true);  // AI
 
-    game.add_player(general1);
-    game.add_player(general2);
-    game.add_player(gov);
+    game.add_player(arthur);
+    game.add_player(elaine);
+    game.add_player(moshe);
+
+    // 🤖 Strategy assignment
+    unordered_map<Player*, AIaction*> ai_map;
+    ai_map[arthur] = new AIaggresive();
+    ai_map[elaine] = new AIaggresive();
+    ai_map[moshe]  = new AIaggresive();
 
     int turn_count = 1;
 
@@ -43,62 +51,32 @@ int main() {
 
             try {
                 Player* target = get_coup_target(current, game.get_players());
+                bool alive_before = target ? target->get_active() : false;
 
-                if (current->get_coins() >= 10 && target) {
-                    cout << current->get_name() << " used COUP on " << target->get_name() << endl;
-                    bool alive_before = target->get_active();
-                    current->coup(*target);
-                    if (target->get_active() && !alive_before) {
-                        cout << "✅ " << target->get_name() << " was saved by a General!\n";
-                    } else if (!target->get_active()) {
-                        cout << "💀 " << target->get_name() << " has been eliminated.\n";
-                    }
-                }
-                else if (auto* g = dynamic_cast<Governor*>(current)) {
-                    if (g->get_coins() >= 7 && target) {
-                        cout << g->get_name() << " used COUP on " << target->get_name() << endl;
-                        bool alive_before = target->get_active();
-                        g->coup(*target);
+                // 👾 AI-controlled logic
+                if (ai_map.count(current)) {
+                    ai_map[current]->favorite_action(current, *target);
+
+                    // ✅ General may have prevented coup
+                    if (target && target->get_action_indicator()[Actions::Coup].first) {
                         if (target->get_active() && !alive_before) {
                             cout << "✅ " << target->get_name() << " was saved by a General!\n";
                         } else if (!target->get_active()) {
                             cout << "💀 " << target->get_name() << " has been eliminated.\n";
                         }
-                    } else if (g->get_coins() >= 4) {
-                        cout << g->get_name() << " used BRIBE" << endl;
-                        g->bribe();
-                    } else {
-                        cout << g->get_name() << " used GATHER" << endl;
-                        g->gather();
                     }
                 }
-                else if (auto* gen = dynamic_cast<General*>(current)) {
-                    if (gen->get_coins() >= 7 && target) {
-                        cout << gen->get_name() << " used COUP on " << target->get_name() << endl;
-                        bool alive_before = target->get_active();
-                        gen->coup(*target);
-                        if (target->get_active() && !alive_before) {
-                            cout << "✅ " << target->get_name() << " was saved by a General!\n";
-                        } else if (!target->get_active()) {
-                            cout << "💀 " << target->get_name() << " has been eliminated.\n";
-                        }
-                    } else if (gen->get_coins() >= 3) {
-                        cout << gen->get_name() << " used TAX" << endl;
-                        gen->tax();
-                    } else {
-                        cout << gen->get_name() << " used GATHER" << endl;
-                        gen->gather();
-                    }
-                }
+                // 🧍 Human player logic (if you add GUI input later)
 
-            } catch (const std::exception& ex) {
+            } catch (const exception& ex) {
                 cout << "Exception: " << ex.what() << endl;
-                game.next_turn(); // Skip on error
+                game.next_turn();
             }
 
             print_balances(game);
             turn_count++;
-            std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+            this_thread::sleep_for(chrono::milliseconds(1000));
         }
 
         if (turn_count > 1000) {
@@ -108,8 +86,13 @@ int main() {
             cout << "🏆 Winner: " << game.winner() << endl;
         }
 
-    } catch (const std::exception& e) {
+    } catch (const exception& e) {
         cout << "Fatal Error: " << e.what() << endl;
+    }
+
+    // ✅ Clean up AI strategies
+    for (auto& pair : ai_map) {
+        delete pair.second;
     }
 
     return 0;

@@ -4,6 +4,9 @@ CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic
 INCLUDES = -I./coup -I./roles
 
+# Add SFML libraries for GUI rendering
+LIBS = -lsfml-graphics -lsfml-window -lsfml-system
+
 SRC = coup/main.cpp \
       coup/Game/Game.cpp \
       coup/Player/Player.cpp \
@@ -20,7 +23,7 @@ EXEC = main
 all: $(EXEC)
 
 $(EXEC): $(OBJ)
-	$(CXX) $(CXXFLAGS) $(OBJ) -o $(EXEC)
+	$(CXX) $(CXXFLAGS) $(OBJ) -o $(EXEC) $(LIBS)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@

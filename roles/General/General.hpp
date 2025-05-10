@@ -14,7 +14,7 @@ class General : public Player{
 
     public:
 
-    General(const string& name, Game& game): Player(name),game(game){};
+    General(const string& name, Game& game,bool is_ai): Player(name,is_ai),game(game){};
     ~General(){};
     General(const General& other) : Player(other),game(other.game){};
     General& operator=(const General &other) = delete;

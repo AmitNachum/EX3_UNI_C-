@@ -32,10 +32,11 @@ class Player{
     vector<std::string> arrested_names;
     std::string name;
     std::vector<pair<bool,Player*>> actions_indicator;
+    bool is_ai;
 
     public:
 
-    Player(const std::string& name);
+    Player(const std::string& name,bool is_ai);
     Player(const Player& other);
     Player& operator=(const Player &other);
     virtual ~Player();
@@ -61,6 +62,7 @@ class Player{
     void set_action_indicator(Actions action,bool value,Player *player);
     vector<pair<bool,Player *>>& get_action_indicator();
     void set_active(bool val);
+    bool is_AI() const;
     
     
     

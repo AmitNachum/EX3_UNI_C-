@@ -3,13 +3,14 @@
 #include "Player.hpp"
 #include <stdexcept>
 
-Player::Player(const std::string& name)
-    : active(true), extra_turn(false), coins(5), name(name),actions_indicator(Actions::NumsAction,{false,nullptr}) {}
+Player::Player(const std::string& name,bool is_ai = false)
+    : active(true), extra_turn(false), coins(5), name(name),actions_indicator(Actions::NumsAction,{false,nullptr}),is_ai(is_ai) {}
 
 Player::Player(const Player& other) {
     this->active = other.active;
     this->name = other.name;
     this->coins = other.coins;
+    this->is_ai = other.is_ai;
 }
 
 Player& Player::operator=(const Player &other) {
@@ -26,6 +27,9 @@ Player::~Player() {}
 
 std::string Player::get_name() const {
     return this->name;
+}
+bool Player::is_AI() const {
+    return is_ai;
 }
 
 

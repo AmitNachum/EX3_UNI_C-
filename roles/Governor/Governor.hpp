@@ -12,10 +12,10 @@ class Governor:public Player{
 
     public:
 
-    Governor(const std::string &name,Game& game) : Player(name),game(game){};
+    Governor(const std::string &name,Game& game,bool is_ai) : Player(name,is_ai),game(game){};
     ~Governor(){};
 
-    Governor(const Governor& other): Player(other.name),game(other.game){};
+    Governor(const Governor& other): Player(other),game(other.game){};
 
     Governor &operator=(const Governor &other) = delete;
 

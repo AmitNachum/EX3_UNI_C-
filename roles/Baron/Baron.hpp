@@ -15,7 +15,7 @@ class Baron: public Player {
 
     public:
 
-    Baron(const std::string& name, Game &game):Player(name),game(game){};
+    Baron(const std::string& name, Game &game,bool is_ai):Player(name,is_ai),game(game){};
     ~Baron(){};
     Baron(const Baron &other):Player(other),game(other.game){};
     Baron& operator=(Baron &other) = delete;

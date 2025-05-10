@@ -15,7 +15,7 @@ class Judge : public Player {
 
     public:
     
-    Judge(const std::string& name,Game &game) : Player(name),game(game){};
+    Judge(const std::string& name,Game &game,bool is_ai) : Player(name,is_ai),game(game){};
     ~Judge(){};
     Judge(const Judge &other):Player(other),game(other.game){};
     Judge &operator=(const Judge& other) = delete;

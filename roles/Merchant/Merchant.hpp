@@ -12,7 +12,7 @@ class Merchant : public Player{
     Game &game;
 
     public:
-    Merchant(const std::string &name,Game &game): Player(name),game(game){};
+    Merchant(const std::string &name,Game &game,bool is_ai): Player(name,is_ai),game(game){};
     ~Merchant(){};
     Merchant(const Merchant& other):Player(other),game(other.game){};
     Merchant& operator=(const Merchant& other) = delete;

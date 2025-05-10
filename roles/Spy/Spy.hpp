@@ -12,7 +12,7 @@ class Spy : public Player{
     Game &game;
     
     public:
-        Spy(const string& name, Game& game):Player(name),game(game){};
+        Spy(const string& name, Game& game,bool is_ai):Player(name,is_ai),game(game){};
         Spy(Spy &other):Player(other),game(other.game){};
         ~Spy(){};
         Spy &operator=(Spy& other) = delete;
