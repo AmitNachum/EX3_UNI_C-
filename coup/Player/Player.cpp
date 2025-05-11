@@ -32,7 +32,10 @@ bool Player::is_AI() const {
     return is_ai;
 }
 
-
+void Player::set_is_AI(bool value)
+{
+    this->is_ai = value;
+}
 
 int Player::get_coins() const {
     return this->coins;

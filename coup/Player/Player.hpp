@@ -63,6 +63,7 @@ class Player{
     vector<pair<bool,Player *>>& get_action_indicator();
     void set_active(bool val);
     bool is_AI() const;
+    void set_is_AI(bool value);
     
     
     

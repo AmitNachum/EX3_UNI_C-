@@ -2,14 +2,14 @@
 #ifndef FACTORY_HPP
 #define FACTORY_HPP
 
-#include "Player/Player.hpp"
-#include "../roles/Baron/Baron.hpp"
-#include "../roles/Governor/Governor.hpp"
-#include "../roles/Judge/Judge.hpp"
-#include "../roles/Merchant/Merchant.hpp"
-#include "../roles/Spy/Spy.hpp"
-#include "../roles/General/General.hpp"
-#include "Game/Game.hpp"
+#include "../../Player/Player.hpp"
+#include "../../../roles/Baron/Baron.hpp"
+#include "../../../roles/Governor/Governor.hpp"
+#include "../../../roles/Judge/Judge.hpp"
+#include "../../../roles/Merchant/Merchant.hpp"
+#include "../../../roles/Spy/Spy.hpp"
+#include "../../../roles/General/General.hpp"
+#include "../../Game/Game.hpp"
 
 enum Roles {
     ROLE_BARON,

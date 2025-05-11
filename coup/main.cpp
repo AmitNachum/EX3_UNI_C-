@@ -26,16 +26,16 @@ Player* get_coup_target(Player* current, const vector<Player*>& players) {
 int main() {
     Game game;
 
-    // 🏭 Factory-created players (AI or Human)
-    Player* arthur = FactoryPlayers::createPlayer(ROLE_GENERAL, "Arthur", game, true);  // AI
-    Player* elaine = FactoryPlayers::createPlayer(ROLE_GENERAL, "Elaine", game, true);  // AI
-    Player* moshe  = FactoryPlayers::createPlayer(ROLE_GOVERNOR, "Moshe", game, true);  // AI
+    // 🏭 Factory-created players
+    Player* arthur = FactoryPlayers::createPlayer(ROLE_GENERAL, "Arthur", game,true);
+    Player* elaine = FactoryPlayers::createPlayer(ROLE_GENERAL, "Elaine", game,true);
+    Player* moshe  = FactoryPlayers::createPlayer(ROLE_GOVERNOR, "Moshe", game,true);
 
     game.add_player(arthur);
     game.add_player(elaine);
     game.add_player(moshe);
 
-    // 🤖 Strategy assignment
+    // 🤖 Strategy assignment (e.g., AIaggresive to all)
     unordered_map<Player*, AIaction*> ai_map;
     ai_map[arthur] = new AIaggresive();
     ai_map[elaine] = new AIaggresive();
@@ -51,23 +51,22 @@ int main() {
 
             try {
                 Player* target = get_coup_target(current, game.get_players());
-                bool alive_before = target ? target->get_active() : false;
 
-                // 👾 AI-controlled logic
                 if (ai_map.count(current)) {
+                    // 🎯 Track coup target for later validation
+                    bool alive_before = target ? target->get_active() : false;
+
+                    // 🧠 Let the AI choose what to do
                     ai_map[current]->favorite_action(current, *target);
 
-                    // ✅ General may have prevented coup
+                    // ✅ Coup feedback
                     if (target && target->get_action_indicator()[Actions::Coup].first) {
-                        if (target->get_active() && !alive_before) {
+                        if (target->get_active() && !alive_before)
                             cout << "✅ " << target->get_name() << " was saved by a General!\n";
-                        } else if (!target->get_active()) {
+                        else if (!target->get_active())
                             cout << "💀 " << target->get_name() << " has been eliminated.\n";
-                        }
                     }
                 }
-                // 🧍 Human player logic (if you add GUI input later)
-
             } catch (const exception& ex) {
                 cout << "Exception: " << ex.what() << endl;
                 game.next_turn();

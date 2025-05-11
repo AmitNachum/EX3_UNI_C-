@@ -2,8 +2,8 @@
 
 #ifndef GOVERNOR_HPP
 #define GOVERNOR_HPP
-#include "../coup/Player/Player.hpp"
-#include "../coup/Game/Game.hpp"
+#include "../../coup/Player/Player.hpp"
+#include "../../coup/Game/Game.hpp"
 
 class Governor:public Player{
 

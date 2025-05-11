@@ -3,7 +3,7 @@
 #ifndef GAME_HPP
 #define GAME_HPP
 #include "../Player/Player.hpp"
-#include "../roles/General/General.hpp"
+#include "../../roles/General/General.hpp"
 #include <vector>
 #include <string>
 
@@ -30,10 +30,10 @@ class Game{
     std::string winner()const;
     vector<Player*> get_players();
     void notify_general_coup(Player &target,Player &executioner);
-
     Player *current_player();
     void next_turn();
     size_t& get_pool();
+    bool is_human_turn();
     
 
 

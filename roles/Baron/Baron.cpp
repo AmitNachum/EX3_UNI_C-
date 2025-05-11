@@ -206,6 +206,7 @@ void Baron::coup(Player &player){
 
     if (player.get_action_indicator()[Actions::Coup].first) {    // 3. No general prevented it
         player.eliminate();                                      //    Now we eliminate the target
+
     } else {
         std::cout << "🛡️ Coup against " << player.get_name() << " was prevented by a General." << std::endl;
     }

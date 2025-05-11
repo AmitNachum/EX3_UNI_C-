@@ -1,7 +1,7 @@
 #ifndef STRATEGY_HPP
 #define STRATEGY_HPP
-#include "Player/Player.hpp"
-#include "Game/Game.hpp"
+#include "../../Player/Player.hpp"
+#include "../../Game/Game.hpp"
 #include <random>
 
 
