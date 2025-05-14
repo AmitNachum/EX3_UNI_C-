@@ -39,9 +39,10 @@ void General::prevent_coup(Player &player){
 
 
 void General::gather(){
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the General's turn");
-
+    if(game.current_player() != this){
+        std::cout <<"Not the General's turn\n";
+        return;
+    }
     handle_arrests();    
 
     if(this->get_coins() >= 10) 
@@ -49,7 +50,7 @@ void General::gather(){
 
 
     if(this->is_blocked(Actions::Gather)){
-            std::cout << "Gather is blocked" <<std::endl;
+            std::cout << "Gather is blocked to "+ this->get_name() <<std::endl;
             this->clear_blocked();
             game.next_turn();
             return;
@@ -72,17 +73,19 @@ void General::gather(){
 
 
 void General::tax(){
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the General's turn");
-
+     if(game.current_player() != this){
+        std::cout <<"Not the General's turn\n";
+        return;
+    }
     handle_arrests();
 
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
     if(this->is_blocked(Actions::Tax)){
-            std::cout << "Tax is blocked" <<std::endl;
+            std::cout << "Tax is blocked to "+ this->get_name() <<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
     }   
 
@@ -105,9 +108,10 @@ void General::tax(){
 
 void General::bribe(){
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the General's turn");
-    
+    if(game.current_player() != this){
+        std::cout <<"Not the General's turn\n";
+        return;
+    }
     handle_arrests();    
 
     if(this->get_coins() >= 10) 
@@ -122,16 +126,22 @@ void General::bribe(){
 
 
         if(this->is_blocked(Actions::Bribe)){
-            std::cout <<"Bribe has been Blocked"<<std::endl;
-            game.next_turn();
+            std::cout <<"Bribe has been Blocked to " + this->get_name()<<std::endl;
             this->clear_blocked();
+            game.next_turn();
+            return;
+        }
+        
+        if(this->has_extra_turn()){
+            this->clear_extra_turn();
             return;
         }
 
 
 
-
         this->extra_turn = true;
+
+        game.next_turn();
 
 }
 
@@ -140,9 +150,10 @@ void General::bribe(){
 
 void General::arrest(Player &player){
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the General's turn");
-    
+     if(game.current_player() != this){
+        std::cout <<"Not the General's turn\n";
+        return;
+    }
     handle_arrests();
 
     if(this->get_coins() >= 10) 
@@ -160,9 +171,9 @@ void General::arrest(Player &player){
         throw std::runtime_error(player.get_name() + " has no coins to steal");
 
     if(this->is_blocked(Actions::Arrest)){
-            std::cout <<"Arrest has been Blocked"<<std::endl;
-            game.next_turn();
+            std::cout <<"Arrest has been Blocked to " + this->get_name()<<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
     }    
 
@@ -185,9 +196,10 @@ game.next_turn();
 
 
 void General::sanction(Player &player){
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the General's turn");
-    
+     if(game.current_player() != this){
+        std::cout <<"Not the General's turn\n";
+        return;
+    }
     handle_arrests();
 
     if(this->get_coins() >= 10) 
@@ -225,9 +237,10 @@ game.next_turn();
 
 void General::coup(Player& player){
     
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the General's turn");
-    
+    if(game.current_player() != this){
+        std::cout <<"Not the General's turn\n";
+        return;
+    }
     handle_arrests();   
 
     if(!player.get_active()) 
@@ -268,9 +281,10 @@ void General::coup(Player& player){
 
 void General::undo(Player &player){
     
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the General's turn");
-
+     if(game.current_player() != this){
+        std::cout <<"Not the General's turn\n";
+        return;
+    }
     player.clear_blocked_action(Actions::Tax);
 
 

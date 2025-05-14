@@ -16,12 +16,29 @@ const int WINDOW_WIDTH = 1000;
 const int WINDOW_HEIGHT = 700;
 
 
+void checkForWinner(Game& game, sf::Text& msg) {
+    int activeCount = 0;
+    Player* lastActive = nullptr;
+    for (Player* p : game.get_players()) {
+        if (p->get_active()) {
+            activeCount++;
+            lastActive = p;
+        }
+    }
+
+    if (activeCount == 1 && lastActive) {
+        msg.setString("Winner: " + lastActive->get_name());
+    }
+}
+
 
 struct PlayerConfig {
     std::string name;
     Roles role;
     bool isAI;
 };
+
+Player *player = nullptr;
 
 struct Button {
     sf::RectangleShape shape;
@@ -166,6 +183,7 @@ int main() {
                                 Player* p = FactoryPlayers::createPlayer(cfg.role, cfg.name, game, cfg.isAI);
                                 game.add_player(p);
                                 createdPlayers.push_back(p);
+                                if(!cfg.isAI) player = p;
                                 if (cfg.isAI) ai_map[p] = new AIaggresive();
                             }
                             for (size_t i = 0; i < createdPlayers.size(); ++i) {
@@ -213,8 +231,8 @@ int main() {
         
             if (event.type == sf::Event::Closed) window.close();
                         if (!gameStarted) {
-                if (event.type == sf::Event::MouseButtonPressed) {
-                    if (addAI.isHovered(mousePos) && playerConfigs.size() < 6) {
+                    if (event.type == sf::Event::MouseButtonPressed) {
+                        if (addAI.isHovered(mousePos) && playerConfigs.size() < 6) {
                         std::string name = aiNames[playerConfigs.size() % aiNames.size()];
                         playerConfigs.push_back({name, allRoles[playerConfigs.size() % allRoles.size()], true});
                         msg.setString("AI Player Added: " + name);
@@ -255,6 +273,7 @@ int main() {
                         humanName += static_cast<char>(event.text.unicode);
                     }
                     inputText.setString(humanName);
+                    
                 }
              else {
                 if (!game.is_human_turn()) {
@@ -292,8 +311,14 @@ int main() {
                     for (auto& btn : fixedButtons) {
                         if (btn.isHovered(mousePos)) {
                             try {
-                                if (btn.label == "Tax") current->tax();
-                                else if (btn.label == "Gather") current->gather();
+                                if (btn.label == "Tax") {
+                                    current->tax();
+                                    checkForWinner(game, msg);
+                                }
+                                else if (btn.label == "Gather"){
+                                    current->gather();
+                                    checkForWinner(game, msg);
+                                }
                                 else if (btn.label == "Invest") {
                                     Baron* baron = dynamic_cast<Baron*>(current);
                                     if (baron) baron->invest();
@@ -308,10 +333,25 @@ int main() {
                     for (auto& btn : targetButtons) {
                         if (btn.isHovered(mousePos) && selectedTarget) {
                             try {
-                                if (btn.label == "Coup") current->coup(*selectedTarget);
-                                else if (btn.label == "Arrest") current->arrest(*selectedTarget);
-                                else if (btn.label == "Sanction") current->sanction(*selectedTarget);
-                                else if (btn.label == "Bribe") current->bribe();
+                                if (btn.label == "Coup"){ 
+                                    current->coup(*selectedTarget);
+                                    checkForWinner(game, msg);
+                                       if (!selectedTarget->get_active()) {
+                                        selectedTarget = nullptr;
+                                        }
+                                }
+                                else if (btn.label == "Arrest") {
+                                    current->arrest(*selectedTarget);
+                                    checkForWinner(game, msg);
+                                }
+                                else if (btn.label == "Sanction") {
+                                    current->sanction(*selectedTarget);
+                                    checkForWinner(game, msg);
+                                }
+                                else if (btn.label == "Bribe"){
+                                     current->bribe();
+                                     checkForWinner(game, msg);
+                                    }
                             
                             } catch (const std::exception& ex) {
                                 msg.setString("Action failed: " + std::string(ex.what()));
@@ -347,20 +387,21 @@ int main() {
             }
 
 
-            // Show human role if it's the current player
-            if (!current->is_AI()) {
-                sf::Text roleText("Role: " + current->get_role_name(), font, 20);
+            
+                if(player){
+                sf::Text roleText("Role: " + player->get_role_name(), font, 20);
                 roleText.setFillColor(sf::Color::Cyan);
                 roleText.setPosition(WINDOW_WIDTH - 200, 20); // Top-right
                 window.draw(roleText);
-                sf::Text coinText("Coins: " + std::to_string(current->get_coins()), font, 20);
+                sf::Text coinText("Coins: " + std::to_string(player->get_coins()), font, 20);
                 coinText.setFillColor(sf::Color::Yellow);
                 coinText.setPosition(WINDOW_WIDTH - 200, 50);
                 window.draw(coinText);
-
-            }
-
+                sf::Text coinCache("Coins Cache:", font, 20);
+                }
             
+
+                
             window.draw(turnText);
 
             if (!current->is_AI()) {
@@ -386,7 +427,8 @@ int main() {
             }
 
             if (current->get_role_name() == "Spy" && !current->is_AI() && spyTarget && spyTarget->get_active()) {
-                sf::Text spyInfo("Spy Target: " + spyTarget->get_name() + " | Coins: " + std::to_string(spyTarget->get_coins()), font, 16);
+                sf::Text spyInfo("Spy Target: " + spyTarget->get_name() + " | Coins: " 
+                + std::to_string(spyTarget->get_coins()), font, 16);
                 spyInfo.setFillColor(sf::Color::Red);
                 spyInfo.setPosition(20, 650);
                 window.draw(spyInfo);

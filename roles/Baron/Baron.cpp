@@ -9,11 +9,13 @@ void Baron::gather(){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Baron's turn");
+      if(game.current_player() != this){
+        std::cout<<"Not the Barons's turn\n";
+        return;
+    }
 
     if(this->is_blocked(Actions::Gather)){
-            std::cout << "Gather is blocked" <<std::endl;
+            std::cout << "Gather is blocked to " + this->get_name() <<std::endl;
             this->clear_blocked();
             game.next_turn();
             return;
@@ -40,11 +42,13 @@ void Baron::tax(){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Baron's turn");
+      if(game.current_player() != this){
+        std::cout<<"Not the Barons's turn\n";
+        return;
+    }
 
     if(this->is_blocked(Actions::Tax)){
-            std::cout << "Tax is blocked" <<std::endl;
+            std::cout << "Tax is blocked to "+ this->get_name() <<std::endl;
             this->clear_blocked();
             game.next_turn();
             return;
@@ -74,8 +78,10 @@ void Baron::bribe(){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Baron's turn");
+     if(game.current_player() != this){
+        std::cout<<"Not the Barons's turn\n";
+        return;
+    }
 
     if(this->get_coins()  < 4) 
         throw std::runtime_error("Not enough Money to bribe");
@@ -86,17 +92,21 @@ void Baron::bribe(){
 
 
         if(this->is_blocked(Actions::Bribe)){
-            std::cout <<"Bribe has been Blocked"<<std::endl;
+            std::cout <<"Bribe has been Blocked "+ this->get_name()<<std::endl;
             this->clear_blocked();
             game.next_turn();
             return;
         }
 
+        if(this->extra_turn){
+            this->clear_extra_turn();
+            return;
+        }
 
 
 
         this->extra_turn = true;
-
+        game.next_turn();
 
 }
 
@@ -105,8 +115,10 @@ void Baron::arrest(Player &player){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Baron's turn");
+    if(game.current_player() != this){
+        std::cout<<"Not the Barons's turn\n";
+        return;
+    }
 
     if(this->has_already_arrested(player)) {
         this->set_free_arrested(player);
@@ -119,9 +131,9 @@ void Baron::arrest(Player &player){
         throw std::runtime_error(player.get_name() + " has no coins to steal");
     
     if(this->is_blocked(Actions::Arrest)){
-            std::cout <<"Arrest has been Blocked"<<std::endl;
-            game.next_turn();
+            std::cout <<"Arrest has been Blocked "+ this->get_name()<<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
     }    
 
@@ -145,8 +157,10 @@ void Baron::sanction(Player &player){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Baron's turn");
+    if(game.current_player() != this){
+        std::cout<<"Not the Barons's turn\n";
+        return;
+    }
 
     if(this->get_coins()  < 3) 
         throw std::runtime_error("Not enough Money to sanction");
@@ -180,9 +194,10 @@ void Baron::sanction(Player &player){
 void Baron::coup(Player &player){
 
     
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Barons's turn");
-
+    if(game.current_player() != this) {
+        std::cout<<"Not the Barons's turn\n";
+        return;
+    }
     if(!player.get_active()) 
         throw std::runtime_error(player.get_name()+" is not active anymore");
     
@@ -223,9 +238,10 @@ void Baron::coup(Player &player){
 
 
 void Baron::undo(Player &player){
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Baron's turn");
-
+    if(game.current_player() != this) {
+        std::cout <<"Not the Baron's turn\n";
+        return;
+    }
     this->handle_sanction_bonus();
         
 
@@ -243,7 +259,7 @@ void Baron::invest(){
     this->handle_sanction_bonus();
 
     if(game.current_player() != this) 
-        throw std::runtime_error("Not the Baron's turn");
+        std::cout <<"Not the Baron's turn\n";
 
     if (game.get_pool() < 3)
         throw std::runtime_error("Not enough coins in the pool to invest");

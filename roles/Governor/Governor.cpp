@@ -8,15 +8,16 @@ void Governor::gather(){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Governer's turn");
-
+    if(game.current_player() != this) {
+        std::cout<< "Not the Governor's turn\n";
+    }
     if (game.get_pool() < 1) 
         throw std::runtime_error("No money to gather");
 
     if(this->is_blocked(Actions::Gather)){
-        std::cout << "Gather is blocked" <<std::endl;
+        std::cout << "Gather is blocked to"+ this->get_name() <<std::endl;
         this->clear_blocked();
+        game.next_turn();
     }    
 
     game.get_pool()--;
@@ -36,12 +37,13 @@ void Governor::tax(){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Governer's turn");
-    
+       if(game.current_player() != this) {
+        std::cout<< "Not the Governor's turn\n";
+    }
     if(this->is_blocked(Actions::Tax)){
-            std::cout << "Tax is blocked" <<std::endl;
+            std::cout << "Tax is blocked to "+ this->get_name() <<std::endl;
             this->clear_blocked();
+            game.next_turn();
     }      
 
     game.get_pool() -= 3;
@@ -60,9 +62,9 @@ void Governor::bribe(){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this)
-        throw std::runtime_error("Not the Governer's turn");
-
+    if(game.current_player() != this) {
+        std::cout<< "Not the Governor's turn\n";
+    }
     if(this->coins < 4) 
         throw std::runtime_error("Not enough Money to bribe");
 
@@ -70,13 +72,22 @@ void Governor::bribe(){
     this->reduce_coins(4);
 
         if(this->is_blocked(Actions::Bribe)){
-            std::cout <<"Bribe has been Blocked"<<std::endl;
-            game.next_turn();
+            std::cout <<"Bribe has been Blocked " + this->get_name()<<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
         }
 
+        if(this->has_extra_turn()){
+            this->clear_extra_turn();
+            return;
+        }
+
+
+
         this->extra_turn = true;
+
+        game.next_turn();
 
 
 }
@@ -85,9 +96,9 @@ void Governor::arrest(Player &player){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Governer's turn");
-
+    if(game.current_player() != this) {
+        std::cout<< "Not the Governor's turn\n";
+    }
     if(this->has_already_arrested(player)) {
         this->set_free_arrested(player);
         throw std::runtime_error(player.get_name() + " has already been arrested");
@@ -100,9 +111,9 @@ void Governor::arrest(Player &player){
         throw std::runtime_error(player.get_name() + " has no coins to steal");
         
     if(this->is_blocked(Actions::Arrest)){
-            std::cout <<"Arrest has been Blocked"<<std::endl;
-            game.next_turn();
+            std::cout <<"Arrest has been Blocked " + this->get_name()<<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
     }    
     player.reduce_coins(1);
@@ -125,9 +136,9 @@ void Governor::sanction(Player &player){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Governer's turn");
-
+        if(game.current_player() != this) {
+        std::cout<< "Not the Governor's turn\n";
+    }
     if(this->get_coins()  < 3) 
         throw std::runtime_error("Not enough Money to sanction");
 
@@ -154,9 +165,9 @@ void Governor::sanction(Player &player){
 
 void Governor::coup(Player &player){
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Governer's turn");
-
+    if(game.current_player() != this) {
+        std::cout<< "Not the Governor's turn\n";
+    }
     if(!player.get_active()) 
         throw std::runtime_error(player.get_name()+" is not active anymore");
     
@@ -168,7 +179,7 @@ void Governor::coup(Player &player){
         throw std::runtime_error("Not enough Money to coup "+player.get_name());
 
     if(this->is_blocked(Actions::Coup)){
-            std::cout << "Coup is blocked" <<std::endl;
+            std::cout << "Coup is blocked to "+ this->get_name() <<std::endl;
             this->clear_blocked();
     }  
     
@@ -199,9 +210,9 @@ void Governor::coup(Player &player){
 }
 
 void Governor::undo(Player &player){
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Governer's turn");
-
+    if(game.current_player() != this) {
+        std::cout<< "Not the Governor's turn\n";
+    }
 
     player.clear_blocked_action(Actions::Tax);
 

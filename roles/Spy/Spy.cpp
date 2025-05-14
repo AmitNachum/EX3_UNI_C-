@@ -17,15 +17,16 @@ void Spy::block_arrest(Player &player){
 
 
 void Spy::gather(){
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Spy's turn");
-
+   if(game.current_player() != this) {
+        std::cout << "Not the Spy's turn\n";
+        return;
+    }
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
 
     if(this->is_blocked(Actions::Gather)){
-            std::cout << "Gather is blocked" <<std::endl;
+            std::cout << "Gather is blocked to " + this->get_name() <<std::endl;
             this->clear_blocked();
             game.next_turn();
             return;
@@ -48,15 +49,17 @@ void Spy::gather(){
 
 
 void Spy::tax(){
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Spy's turn");
-
+    if(game.current_player() != this) {
+        std::cout << "Not the Spy's turn\n";
+        return;
+    }
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
     if(this->is_blocked(Actions::Tax)){
-            std::cout << "Tax is blocked" <<std::endl;
+            std::cout << "Tax is blocked to " + this->get_name() <<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
     }   
 
@@ -79,9 +82,10 @@ void Spy::tax(){
 
 void Spy::bribe(){
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Spy's turn");
-
+    if(game.current_player() != this) {
+        std::cout << "Not the Spy's turn\n";
+        return;
+    }
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
@@ -94,16 +98,25 @@ void Spy::bribe(){
 
 
         if(this->is_blocked(Actions::Bribe)){
-            std::cout <<"Bribe has been Blocked"<<std::endl;
-            game.next_turn();
+            std::cout <<"Bribe has been Blocked to " + this->get_name() <<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
         }
 
 
 
 
+        if(this->has_extra_turn()){
+            this->clear_extra_turn();
+            return;
+        }
+
+
+
         this->extra_turn = true;
+
+        game.next_turn();
 
 }
 
@@ -111,9 +124,10 @@ void Spy::bribe(){
 
 void Spy::arrest(Player &player){
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Spy's turn");
-
+    if(game.current_player() != this) {
+        std::cout << "Not the Spy's turn\n";
+        return;
+    }
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
@@ -129,9 +143,9 @@ void Spy::arrest(Player &player){
         throw std::runtime_error(player.get_name() + " has no coins to steal");
 
     if(this->is_blocked(Actions::Arrest)){
-            std::cout <<"Arrest has been Blocked"<<std::endl;
-            game.next_turn();
+            std::cout <<"Arrest has been Blocked to " + this->get_name()<<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
     }    
 
@@ -151,9 +165,10 @@ game.next_turn();
 
 
 void Spy::sanction(Player &player){
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Spy's turn");
-
+    if(game.current_player() != this) {
+        std::cout << "Not the Spy's turn\n";
+        return;
+    }
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
@@ -188,9 +203,10 @@ game.next_turn();
 
 void Spy::coup(Player& player){
     
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Spy's turn");
-
+    if(game.current_player() != this) {
+        std::cout << "Not the Spy's turn\n";
+        return;
+    }
     if(!player.get_active()) 
         throw std::runtime_error(player.get_name()+" is not active anymore");
 
@@ -228,9 +244,10 @@ void Spy::coup(Player& player){
 
 void Spy::undo(Player &player){
     
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Spy's turn");
-
+    if(game.current_player() != this) {
+        std::cout << "Not the Spy's turn\n";
+        return;
+    }
     player.clear_blocked_action(Actions::Tax);
 
 

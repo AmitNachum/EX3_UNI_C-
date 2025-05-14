@@ -30,11 +30,12 @@ void Merchant::gather(){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Merchant's turn");
-
+    if(game.current_player() != this){
+        std::cout<<"Not the Merchant's turn\n";
+        return;
+    }
     if(this->is_blocked(Actions::Gather)){
-            std::cout << "Gather is blocked" <<std::endl;
+            std::cout << "Gather is blocked to " + this->get_name() <<std::endl;
             this->clear_blocked();
             game.next_turn();
             return;
@@ -59,12 +60,14 @@ void Merchant::tax(){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Merchant's turn");
-
+    if(game.current_player() != this){
+        std::cout<<"Not the Merchant's turn\n";
+        return;
+    }
     if(this->is_blocked(Actions::Tax)){
-            std::cout << "Tax is blocked" <<std::endl;
+            std::cout << "Tax is blocked to " + this->get_name() <<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
     }   
 
@@ -91,20 +94,21 @@ void Merchant::bribe(){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Merchant's turn");
-
+    if(game.current_player() != this){
+        std::cout<<"Not the Merchant's turn\n";
+        return;
+    }
     if(this->get_coins()  < 4) 
         throw std::runtime_error("Not enough Money to bribe");
 
     if(this->is_blocked(Actions::Bribe)){
-            std::cout <<"Bribe has been Blocked"<<std::endl;
-            game.next_turn();
+            std::cout <<"Bribe has been Blocked to " + this->get_name()<<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
         }
         
- handle_passive_effects();
+    handle_passive_effects();
 
     this->game.get_pool() += 4;
     this->reduce_coins(4);
@@ -112,8 +116,9 @@ void Merchant::bribe(){
 
 
 
-
         this->extra_turn = true;
+
+        game.next_turn();
 
 }
 
@@ -125,9 +130,10 @@ void Merchant::arrest(Player &player){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Merchant's turn");
-
+    if(game.current_player() != this){
+        std::cout<<"Not the Merchant's turn\n";
+        return;
+    }
     if(this->has_already_arrested(player)) {
         this->set_free_arrested(player);
         throw std::runtime_error(player.get_name() + " has already been arrested");
@@ -156,9 +162,11 @@ game.next_turn();
 
 
 void Merchant::sanction(Player &player){
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Merchant's turn");
 
+    if(game.current_player() != this){
+        std::cout<<"Not the Merchant's turn\n";
+        return;
+    }
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
@@ -193,8 +201,10 @@ game.next_turn();
 
 void Merchant::coup(Player& player){
     
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Merchant's turn");
+     if(game.current_player() != this){
+        std::cout<<"Not the Merchant's turn\n";
+        return;
+    }
 
     if(!player.get_active()) 
         throw std::runtime_error(player.get_name()+" is not active anymore");
@@ -237,8 +247,11 @@ void Merchant::coup(Player& player){
 
 void Merchant::undo(Player &player){
     
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Merchant's turn");
+    if(game.current_player() != this){
+        std::cout<<"Not the Merchant's turn\n";
+        return;
+    }
+
 
     handle_passive_effects();
     player.clear_blocked_action(Actions::Tax);

@@ -9,11 +9,11 @@ void Judge::gather(){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Judge's turn");
-
+    if(game.current_player() != this){ 
+       std::cout << "Not the Judge's turn\n";
+    }
     if(this->is_blocked(Actions::Gather)){
-            std::cout << "Gather is blocked" <<std::endl;
+            std::cout << "Gather is blocked to " + this->get_name()<<std::endl;
             this->clear_blocked();
             game.next_turn();
             return;
@@ -40,12 +40,13 @@ void Judge::tax(){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Judge's turn");
-
+     if(game.current_player() != this){ 
+       std::cout << "Not the Judge's turn\n";
+    }
     if(this->is_blocked(Actions::Tax)){
-            std::cout << "Tax is blocked" <<std::endl;
+            std::cout << "Tax is blocked " + this->get_name()<<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
     }   
 
@@ -70,8 +71,9 @@ void Judge::bribe(){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Judge's turn");
+     if(game.current_player() != this){ 
+       std::cout << "Not the Judge's turn\n";
+    }
 
     if(this->get_coins()  < 4) 
         throw std::runtime_error("Not enough Money to bribe");
@@ -82,16 +84,25 @@ void Judge::bribe(){
 
 
         if(this->is_blocked(Actions::Bribe)){
-            std::cout <<"Bribe has been Blocked"<<std::endl;
-            game.next_turn();
+            std::cout <<"Bribe has been Blocked " + this->get_name()<<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
         }
 
 
 
 
+            if(this->has_extra_turn()){
+            this->clear_extra_turn();
+            return;
+        }
+
+
+
         this->extra_turn = true;
+
+        game.next_turn();
 
 }
 
@@ -101,8 +112,9 @@ void Judge::arrest(Player &player){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Judge's turn");
+    if(game.current_player() != this){ 
+       std::cout << "Not the Judge's turn\n";
+    }
 
     if(this->has_already_arrested(player)) {
         this->set_free_arrested(player);
@@ -116,9 +128,9 @@ void Judge::arrest(Player &player){
         throw std::runtime_error(player.get_name() + " has no coins to steal");
 
     if(this->is_blocked(Actions::Arrest)){
-            std::cout <<"Arrest has been Blocked"<<std::endl;
-            game.next_turn();
+            std::cout <<"Arrest has been Blocked to "+ this->get_name() <<std::endl;
             this->clear_blocked();
+            game.next_turn();
             return;
     }    
 
@@ -143,8 +155,9 @@ void Judge::sanction(Player &player){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Judge's turn");
+    if(game.current_player() != this){ 
+       std::cout << "Not the Judge's turn\n";
+    }
 
     if(this->get_coins()  < 3) 
         throw std::runtime_error("Not enough Money to sanction");
@@ -176,9 +189,9 @@ game.next_turn();
 void Judge::coup(Player& player){
     handle_sanctions();
 
-    if(game.current_player() != this) 
-        throw std::runtime_error("Not the Judge's turn");
-
+    if(game.current_player() != this){ 
+       std::cout << "Not the Judge's turn\n";
+    }
     if(!player.get_active()) 
         throw std::runtime_error(player.get_name()+" is not active anymore");
 
@@ -214,9 +227,7 @@ void Judge::coup(Player& player){
 }
 
 
-void Judge::undo(Player &player){
-    throw std::runtime_error("Judge cannot undo tax");
-}
+void Judge::undo(Player &player){};
 
 
 std::string Judge::get_role_name() const{

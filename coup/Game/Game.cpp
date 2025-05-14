@@ -91,16 +91,18 @@ void Game::next_turn(){
         currentTurnIndex = ( currentTurnIndex + 1 ) % total;
 
         if(players.at(currentTurnIndex)->get_active()){ 
-            return;
+            break;
         }
 
         attempts++;
         
     }
+    Player *curr = players.at(currentTurnIndex);
 
-
-
-    throw std::runtime_error("No active players left to take a turn.");
+    if(curr->has_extra_turn()){
+    curr->clear_extra_turn();
+        return;
+    }
 }
 
 
@@ -124,26 +126,40 @@ void Game::notify_general_coup(Player &target, Player &executioner) {
         if (!general) continue;
 
      
-        if (p->is_AI()) {
+       if (general->is_AI()) {
+
+        if(general == &target){
+            try {
+
+            general->prevent_coup(target);
+            std::cout << general->get_name() << " (AI) saved itself from a coup!" << std::endl;
+
+            } catch (const std::exception& e) {
+            std::cout << general->get_name() << " (AI) failed to save itself: " << e.what() << std::endl;
+        }
+            continue;
+        }
+
+
+        int decision = rand() % 2;
+        if (decision == 1) {
             try {
                 general->prevent_coup(target);
-            } catch (const std::exception& e) {
+                std::cout << general->get_name() << " (AI) prevented the coup against " << target.get_name() << "\n";
+                return; 
+            }  catch (const std::exception& e) {
                 if (std::string(e.what()).find("Not the") != std::string::npos &&
                     std::string(e.what()).find("turn") != std::string::npos) {
                     std::cout << "🛡️ General tried to prevent a coup out of turn. Skipping...\n";
-                } else {
-                    throw;
-                }
-            }
-            
-
-            int decision = rand() % 2;
-            if (decision == 1) {
-                general->prevent_coup(target);
             } else {
-                std::cout << general->get_name() << " (AI) chose NOT to save " << target.get_name() << std::endl;
+                throw;
             }
         }
+    } else {
+        std::cout << general->get_name() << " (AI) chose NOT to save " << target.get_name() << std::endl;
+    }
+}
+
 
         
         else {
@@ -154,6 +170,12 @@ void Game::notify_general_coup(Player &target, Player &executioner) {
                 return;
             }
 
+
+            sf::Text info("General " + p->get_name() + ",\n" + executioner.get_name() + " is about to coup " + target.get_name(), font, 18);
+            info.setFillColor(sf::Color::White);
+            info.setPosition(20, 10);
+
+            
             sf::Text question("Prevent coup on " + target.get_name() + "?", font, 20);
             question.setFillColor(sf::Color::White);
             question.setPosition(40, 40);
