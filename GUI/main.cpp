@@ -29,7 +29,9 @@ void checkForWinner(Game& game, sf::Text& msg) {
     if (activeCount == 1 && lastActive) {
         msg.setString("Winner: " + lastActive->get_name());
     }
+    
 }
+
 
 
 struct PlayerConfig {
@@ -166,17 +168,29 @@ int main() {
 
             if (!gameStarted) {
                 if (event.type == sf::Event::MouseButtonPressed) {
+
                     if (addAI.isHovered(mousePos) && playerConfigs.size() < 6) {
+
                         std::string name = aiNames[playerConfigs.size() % aiNames.size()];
                         playerConfigs.push_back({name, allRoles[rand() % allRoles.size()], true});
                         msg.setString("AI Player Added: " + name);
+                        
                     } else if (addHuman.isHovered(mousePos)) {
-                        if (playerConfigs.size() < 6 && std::none_of(playerConfigs.begin(), playerConfigs.end(), [](const PlayerConfig& cfg) { return !cfg.isAI; })) {
+
+                        if (playerConfigs.size() < 6 && std::none_of(playerConfigs.begin(),
+                        playerConfigs.end(),
+                         [](const PlayerConfig& cfg) { return !cfg.isAI; })){
+
                             typingName = true;
                             msg.setString("Enter your name:");
-                        } else {
+
+                        } 
+
+                        else {
                             msg.setString("Only one human player allowed.");
                         }
+
+
                     } else if (startGame.isHovered(mousePos)) {
                         if (playerConfigs.size() >= 2) {
                             for (const auto& cfg : playerConfigs) {
@@ -231,15 +245,29 @@ int main() {
         
             if (event.type == sf::Event::Closed) window.close();
                         if (!gameStarted) {
+
                     if (event.type == sf::Event::MouseButtonPressed) {
+
                         if (addAI.isHovered(mousePos) && playerConfigs.size() < 6) {
+
                         std::string name = aiNames[playerConfigs.size() % aiNames.size()];
                         playerConfigs.push_back({name, allRoles[playerConfigs.size() % allRoles.size()], true});
                         msg.setString("AI Player Added: " + name);
-                    } else if (addHuman.isHovered(mousePos)) {
-                        if (playerConfigs.size() < 6 && std::none_of(playerConfigs.begin(), playerConfigs.end(), [](const PlayerConfig& cfg) { return !cfg.isAI; })) {
+
+
+                    } 
+                    
+                    else if (addHuman.isHovered(mousePos)) {
+
+                    if (playerConfigs.size() < 6 &&
+                    
+                        std::none_of(playerConfigs.begin(),
+                        playerConfigs.end(),
+                        [](const PlayerConfig& cfg) { return !cfg.isAI; })){
                             typingName = true;
                             msg.setString("Enter your name:");
+
+                            
                         } else {
                             msg.setString("Only one human player allowed.");
                         }
@@ -277,8 +305,14 @@ int main() {
                 }
              else {
                 if (!game.is_human_turn()) {
+                    msg.setString("");
                     std::this_thread::sleep_for(std::chrono::seconds(1));
                     Player* current = game.current_player();
+
+                    if(game.game_over()){
+                        msg.setString("Game Over. Please restart. ");
+                    }
+
                     fixedButtons.clear();
                     fixedButtons.emplace_back(600, 100, 150, 40, "Tax", font);
                     fixedButtons.emplace_back(600, 160, 150, 40, "Gather", font);
@@ -290,15 +324,32 @@ int main() {
                             break;
                         }
                     }
-                    if (target) ai_map[current]->favorite_action(current, *target);
+                    if (target){
+                        try{ai_map[current]->favorite_action(current, *target);}
+                        catch(const std::exception& ex){}
+                        
+                        game.next_turn();
+                    }
                 } else if (event.type == sf::Event::MouseButtonPressed) {
                     Player* current = game.current_player();
-                                 // After drawing turn text
+                   
+
+                    if(game.game_over()){
+                        msg.setString("Game Over. Please restart. ");
+                        continue;
+                    }
+
+
                     fixedButtons.clear();
+                   
                     fixedButtons.emplace_back(600, 100, 150, 40, "Tax", font);
                     fixedButtons.emplace_back(600, 160, 150, 40, "Gather", font);
-                    if (current->get_role_name() == "Baron" && !current->is_AI()) {
+
+                    if (current->get_role_name() == "Baron") {
                         fixedButtons.emplace_back(600, 220, 150, 40, "Invest", font);
+                    }
+                    if(current->get_role_name() == "Governor"){
+                        fixedButtons.emplace_back(600,200,150,40,"Block tax",font);
                     }
       
                     for (auto& box : playerBoxes) {
@@ -311,70 +362,96 @@ int main() {
                     for (auto& btn : fixedButtons) {
                         if (btn.isHovered(mousePos)) {
                             try {
+                                if(btn.label == "Block Tax"){
+                                    Governor *governor = dynamic_cast<Governor *>(current);
+                                    if(!governor) throw std::runtime_error("Only Governor can Block Tax");
+                                    if(!selectedTarget) throw std::runtime_error("Select a player first");
+                                    governor->block_tax(*selectedTarget);
+                                    msg.setString("Blocked Tax for " + selectedTarget->get_name());
+                                }
                                 if (btn.label == "Tax") {
                                     current->tax();
-                                    checkForWinner(game, msg);
                                 }
                                 else if (btn.label == "Gather"){
                                     current->gather();
-                                    checkForWinner(game, msg);
                                 }
                                 else if (btn.label == "Invest") {
                                     Baron* baron = dynamic_cast<Baron*>(current);
                                     if (baron) baron->invest();
                                     else msg.setString("Only Barons can invest.");
                                 }
+
+                                checkForWinner(game, msg);
+                                if(current->has_extra_turn()){
+                                    current->clear_extra_turn();
+                                }
+                                else{
+                                    game.next_turn();
+                                }
+
                                 
                             } catch (const std::exception& ex) {
-                                msg.setString("Action failed: " + std::string(ex.what()));
+                                msg.setString(ex.what());
                             }
+                            
                         }
+                        msg.setString("");
                     }
                     for (auto& btn : targetButtons) {
                         if (btn.isHovered(mousePos) && selectedTarget) {
                             try {
                                 if (btn.label == "Coup"){ 
                                     current->coup(*selectedTarget);
-                                    checkForWinner(game, msg);
-                                       if (!selectedTarget->get_active()) {
-                                        selectedTarget = nullptr;
-                                        }
-                                }
-                                else if (btn.label == "Arrest") {
-                                    current->arrest(*selectedTarget);
-                                    checkForWinner(game, msg);
-                                }
-                                else if (btn.label == "Sanction") {
-                                    current->sanction(*selectedTarget);
-                                    checkForWinner(game, msg);
-                                }
-                                else if (btn.label == "Bribe"){
-                                     current->bribe();
-                                     checkForWinner(game, msg);
-                                    }
-                            
-                            } catch (const std::exception& ex) {
-                                msg.setString("Action failed: " + std::string(ex.what()));
+                                    
+                            if (!selectedTarget->get_active()) {
+                                selectedTarget = nullptr;
                             }
                         }
+                            else if (btn.label == "Arrest") {
+                                current->arrest(*selectedTarget);   
+                             }
+
+                            else if (btn.label == "Sanction") {
+                                current->sanction(*selectedTarget);   
+                            }
+
+                            else if (btn.label == "Bribe"){
+                            current->bribe();
+                            
+                        }     
+                            checkForWinner(game, msg);
+                            if(current->has_extra_turn()){
+                            current->clear_extra_turn();
+                            }
+                            else{
+                                game.next_turn();
+                            }
+                            
+                            } catch (const std::exception& ex) {
+                                msg.setString(ex.what());
+                            }
+                            
+                        }
+                        msg.setString("");
                     }
                 }
             }
         
 
-        window.clear();
-        window.draw(backgroundSprite);
+                window.clear();
+                window.draw(backgroundSprite);
 
-        if (!gameStarted) {
-            for (auto* b : {&addAI, &addHuman, &startGame}) {
-                b->shape.setFillColor(b->isHovered(mousePos) ? sf::Color(130, 130, 255) : sf::Color(100, 100, 250));
-                b->draw(window);
-            }
-            window.draw(msg);
-            if (typingName) {
-                window.draw(inputBox);
-                window.draw(inputText);
-            }
+                if (!gameStarted) {
+                    for (auto* b : {&addAI, &addHuman, &startGame}) {
+                    b->shape.setFillColor(b->isHovered(mousePos) ? sf::Color(130, 130, 255) : sf::Color(100, 100, 250));
+                    b->draw(window);
+                    }
+                window.draw(msg);
+
+                if (typingName) {
+                    window.draw(inputBox);
+                    window.draw(inputText);
+                    }
         } else {
             Player* current = game.current_player();
             sf::Text turnText("Turn: " + current->get_name(), font, 20);
@@ -382,8 +459,11 @@ int main() {
             fixedButtons.clear();
             fixedButtons.emplace_back(600, 100, 150, 40, "Tax", font);
             fixedButtons.emplace_back(600, 160, 150, 40, "Gather", font);
-            if (current->get_role_name() == "Baron" && !current->is_AI()) {
+            if (current->get_role_name() == "Baron") {
                 fixedButtons.emplace_back(600, 220, 150, 40, "Invest", font);
+            }
+            if(current->get_role_name() == "Governor"){
+                fixedButtons.emplace_back(600,220,150,40,"Blocked Tax",font);
             }
 
 

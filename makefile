@@ -3,7 +3,7 @@ LIBS = -lsfml-graphics -lsfml-window -lsfml-system
 
 # File that contains GUI's main()
 GUI_MAIN = GUI/main.cpp
-
+CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic -g
 # Executables
 MAIN_EXEC = main
 GUI_EXEC = gui

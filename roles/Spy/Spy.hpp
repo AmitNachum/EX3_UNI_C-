@@ -24,7 +24,7 @@ class Spy : public Player{
         void sanction(Player &player) override;
         void coup(Player &player) override;
         void undo(Player &player) override;
-        string view_pile(Player &player);
+        virtual string view_pile(Player &player);
         void block_arrest(Player &player);
         std::string get_role_name() const;
 };

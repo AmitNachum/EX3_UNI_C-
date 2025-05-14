@@ -34,6 +34,7 @@ class Game{
     void next_turn();
     size_t& get_pool();
     bool is_human_turn();
+    bool game_over();
     
 
 

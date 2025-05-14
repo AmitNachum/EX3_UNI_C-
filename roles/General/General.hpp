@@ -29,7 +29,7 @@ class General : public Player{
     void undo(Player &player);
     std::string get_role_name() const;
 
-    void prevent_coup(Player &Player);
+   virtual void prevent_coup(Player &Player);
     void handle_arrests();
     void revive_player(Player &Player);
 };

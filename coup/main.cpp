@@ -1,98 +1,68 @@
 #include "Game/Game.hpp"
 #include "Role/Factory/Factory.hpp"
-#include "Role/Strategy/Strategy.hpp"
 #include <iostream>
-#include <thread>
-#include <chrono>
-#include <unordered_map>
 
 using namespace std;
 
-void print_balances(Game& game) {
-    cout << "\n--- Coin Balances ---" << endl;
+void show_balances(Game& game) {
+    cout << "\n--- Current Balances ---" << endl;
     for (auto* p : game.get_players()) {
-        cout << p->get_role_name() << " (" << p->get_name() << "): " << p->get_coins() << " coins" << endl;
+        cout << p->get_name() << ": " << p->get_coins() << " coins" << endl;
     }
-    cout << "Pool: " << game.get_pool() << " coins\n" << endl;
-}
-
-Player* get_coup_target(Player* current, const vector<Player*>& players) {
-    for (Player* p : players) {
-        if (p != current && p->get_active()) return p;
-    }
-    return nullptr;
+    cout << "Pool: " << game.get_pool() << " coins" << endl;
 }
 
 int main() {
     Game game;
 
-    // 🏭 Factory-created players
-    Player* arthur = FactoryPlayers::createPlayer(ROLE_GENERAL, "Arthur", game,true);
-    Player* elaine = FactoryPlayers::createPlayer(ROLE_GENERAL, "Elaine", game,true);
-    Player* moshe  = FactoryPlayers::createPlayer(ROLE_GOVERNOR, "Moshe", game,true);
+    Player* g1 = FactoryPlayers::createPlayer(ROLE_GENERAL, "General1", game, false);
+    Player* g2 = FactoryPlayers::createPlayer(ROLE_GENERAL, "General2", game, false);
 
-    game.add_player(arthur);
-    game.add_player(elaine);
-    game.add_player(moshe);
+    game.add_player(g1);
+    game.add_player(g2);
 
-    // 🤖 Strategy assignment (e.g., AIaggresive to all)
-    unordered_map<Player*, AIaction*> ai_map;
-    ai_map[arthur] = new AIaggresive();
-    ai_map[elaine] = new AIaggresive();
-    ai_map[moshe]  = new AIaggresive();
+    int turn_counter = 1;
+    int max_turns = 8;
 
-    int turn_count = 1;
+    while (turn_counter <= max_turns) {
+        Player* current = game.current_player();
+        cout << "\nTurn " << turn_counter << ": " << current->get_name() << endl;
 
-    try {
-        while (game.active_players().size() > 1 && turn_count <= 1000) {
-            Player* current = game.current_player();
-            cout << "\n--- Turn " << turn_count << ": " << current->get_name()
-                 << " (" << current->get_role_name() << ") ---" << endl;
-
-            try {
-                Player* target = get_coup_target(current, game.get_players());
-
-                if (ai_map.count(current)) {
-                    // 🎯 Track coup target for later validation
-                    bool alive_before = target ? target->get_active() : false;
-
-                    // 🧠 Let the AI choose what to do
-                    ai_map[current]->favorite_action(current, *target);
-
-                    // ✅ Coup feedback
-                    if (target && target->get_action_indicator()[Actions::Coup].first) {
-                        if (target->get_active() && !alive_before)
-                            cout << "✅ " << target->get_name() << " was saved by a General!\n";
-                        else if (!target->get_active())
-                            cout << "💀 " << target->get_name() << " has been eliminated.\n";
-                    }
-                }
-            } catch (const exception& ex) {
-                cout << "Exception: " << ex.what() << endl;
-                game.next_turn();
+        try {
+            if (current == g1 && turn_counter == 1) {
+                cout << "General1 performs BRIBE (sets extra turn)" << endl;
+                dynamic_cast<General*>(g1)->bribe();
+            } else {
+                cout << current->get_name() << " performs GATHER" << endl;
+                dynamic_cast<General*>(current)->gather();
             }
 
-            print_balances(game);
-            turn_count++;
+            show_balances(game);
 
-            this_thread::sleep_for(chrono::milliseconds(1000));
+            // Check if extra turn is scheduled (without clearing it yet)
+            if (current->has_extra_turn()) {
+                cout << "➡ " << current->get_name() << " will have an EXTRA TURN after their next normal turn.\n";
+            }
+
+        } catch (const exception& e) {
+            cout << "Exception: " << e.what() << endl;
         }
 
-        if (turn_count > 1000) {
-            cout << "\n=== GAME TIMEOUT: Too many turns ===" << endl;
-        } else {
-            cout << "\n=== GAME OVER ===" << endl;
-            cout << "🏆 Winner: " << game.winner() << endl;
+        // Move to next player as usual
+        game.next_turn();
+        turn_counter++;
+
+        // If after moving to current again and still has extra turn, give it now.
+        Player* next = game.current_player();
+        if (next->has_extra_turn()) {
+            cout << "⬅ Extra turn NOW for " << next->get_name() << endl;
+            next->clear_extra_turn();
+
+            cout << next->get_name() << " performs GATHER (EXTRA TURN)" << endl;
+            dynamic_cast<General*>(next)->gather();
+            show_balances(game);
         }
-
-    } catch (const exception& e) {
-        cout << "Fatal Error: " << e.what() << endl;
     }
 
-    // ✅ Clean up AI strategies
-    for (auto& pair : ai_map) {
-        delete pair.second;
-    }
-
-    return 0;
+    cout << "\n=== Simulation End ===\n";
 }

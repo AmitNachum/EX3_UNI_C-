@@ -89,20 +89,17 @@ void Game::next_turn(){
     while (attempts < total)
     {
         currentTurnIndex = ( currentTurnIndex + 1 ) % total;
+        Player *curr = players.at(currentTurnIndex);
 
-        if(players.at(currentTurnIndex)->get_active()){ 
+        if(curr->get_active()){ 
             break;
         }
 
         attempts++;
         
     }
-    Player *curr = players.at(currentTurnIndex);
 
-    if(curr->has_extra_turn()){
-    curr->clear_extra_turn();
-        return;
-    }
+
 }
 
 
@@ -130,7 +127,10 @@ void Game::notify_general_coup(Player &target, Player &executioner) {
 
         if(general == &target){
             try {
-
+                if(p->get_coins() < 5){ 
+                std::cout << "General cannot prevent the coup — not enough coins." << std::endl;
+                continue;
+               }
             general->prevent_coup(target);
             std::cout << general->get_name() << " (AI) saved itself from a coup!" << std::endl;
 
@@ -232,3 +232,15 @@ bool Game::is_human_turn(){
     return !(this->current_player()->is_AI());
 }
 
+bool Game::game_over()
+{
+    int alive = 0;
+
+    for(auto *player : players){
+        if(player->get_active()){
+            alive++;
+        }
+    }
+
+    return alive <= 1;
+}

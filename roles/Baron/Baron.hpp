@@ -33,7 +33,7 @@ class Baron: public Player {
 
     
     void handle_sanction_bonus();
-    void invest();
+    virtual void invest();
 
 
 

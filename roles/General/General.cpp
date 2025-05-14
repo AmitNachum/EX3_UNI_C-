@@ -16,11 +16,11 @@ void General::revive_player(Player &player){
 
 void General::prevent_coup(Player &player){
     if(this->get_coins() < 5){ 
-        std::cout << "General cannot prevent the coup — not enough coins." << std::endl;
-        return;
+       throw std::runtime_error("General cannot prevent the coup — not enough coins.");
     }
-
-    if(!(player.get_action_indicator()[Actions::Coup].first) || player.get_action_indicator()[Actions::Coup].second == nullptr) return;
+    
+    if(!(player.get_action_indicator()[Actions::Coup].first) || 
+    player.get_action_indicator()[Actions::Coup].second == nullptr) return;
 
     
     this->reduce_coins(5);
@@ -39,10 +39,11 @@ void General::prevent_coup(Player &player){
 
 
 void General::gather(){
+
     if(game.current_player() != this){
-        std::cout <<"Not the General's turn\n";
-        return;
+        throw std::runtime_error("Not the General's turn");
     }
+
     handle_arrests();    
 
     if(this->get_coins() >= 10) 
@@ -52,7 +53,6 @@ void General::gather(){
     if(this->is_blocked(Actions::Gather)){
             std::cout << "Gather is blocked to "+ this->get_name() <<std::endl;
             this->clear_blocked();
-            game.next_turn();
             return;
     }   
 
@@ -60,12 +60,7 @@ void General::gather(){
     game.get_pool()--;
     this->add_coins(1);
 
-    if(this->has_extra_turn()){
-        this->clear_extra_turn();
-        return;
-    }
-    
-    game.next_turn();
+
 
 
 }
@@ -73,10 +68,11 @@ void General::gather(){
 
 
 void General::tax(){
+
      if(game.current_player() != this){
-        std::cout <<"Not the General's turn\n";
-        return;
+        throw std::runtime_error("Not the General's turn");
     }
+
     handle_arrests();
 
     if(this->get_coins() >= 10) 
@@ -85,22 +81,13 @@ void General::tax(){
     if(this->is_blocked(Actions::Tax)){
             std::cout << "Tax is blocked to "+ this->get_name() <<std::endl;
             this->clear_blocked();
-            game.next_turn();
             return;
     }   
-
-
-
 
     game.get_pool() -= 2;
     this->add_coins(2);
 
-    if(this->has_extra_turn()){
-        this->clear_extra_turn();
-        return;
-    }
 
-    game.next_turn();
 
 }
 
@@ -109,9 +96,10 @@ void General::tax(){
 void General::bribe(){
 
     if(game.current_player() != this){
-        std::cout <<"Not the General's turn\n";
+        throw std::runtime_error("Not the General's turn");
         return;
     }
+
     handle_arrests();    
 
     if(this->get_coins() >= 10) 
@@ -120,7 +108,7 @@ void General::bribe(){
     if(this->get_coins()  < 4) 
         throw std::runtime_error("Not enough Money to bribe");
 
-
+    
     this->game.get_pool() += 4;
     this->reduce_coins(4);
 
@@ -128,20 +116,12 @@ void General::bribe(){
         if(this->is_blocked(Actions::Bribe)){
             std::cout <<"Bribe has been Blocked to " + this->get_name()<<std::endl;
             this->clear_blocked();
-            game.next_turn();
             return;
         }
         
-        if(this->has_extra_turn()){
-            this->clear_extra_turn();
-            return;
-        }
-
-
 
         this->extra_turn = true;
 
-        game.next_turn();
 
 }
 
@@ -151,13 +131,14 @@ void General::bribe(){
 void General::arrest(Player &player){
 
      if(game.current_player() != this){
-        std::cout <<"Not the General's turn\n";
-        return;
+        throw std::runtime_error("Not the General's turn\n");
     }
+
     handle_arrests();
 
-    if(this->get_coins() >= 10) 
+    if(this->get_coins() >= 10){ 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
+    }
 
     if(this->has_already_arrested(player)) {
         this->set_free_arrested(player);
@@ -166,6 +147,9 @@ void General::arrest(Player &player){
 
     if(this == &player)
         throw std::runtime_error("You cannot sanction yourself");
+    if(!player.get_active()){
+        throw std::runtime_error(player.get_name() + " Has been Couped");
+    }    
 
     if (player.get_coins() < 1) 
         throw std::runtime_error(player.get_name() + " has no coins to steal");
@@ -173,7 +157,6 @@ void General::arrest(Player &player){
     if(this->is_blocked(Actions::Arrest)){
             std::cout <<"Arrest has been Blocked to " + this->get_name()<<std::endl;
             this->clear_blocked();
-            game.next_turn();
             return;
     }    
 
@@ -182,12 +165,8 @@ void General::arrest(Player &player){
 player.reduce_coins(1);
 this->add_coins(1);
 
-if(this->has_extra_turn()){
-    this->clear_extra_turn();
-    return;
-}
 
-game.next_turn();
+
 
 }
 
@@ -210,6 +189,10 @@ void General::sanction(Player &player){
 
     if(this == &player)
         throw std::runtime_error("You cannot sanction yourself");
+
+    if(!player.get_active()){
+        throw std::runtime_error(player.get_name() + " Has been Couped");
+    }    
     
 
 
@@ -224,12 +207,9 @@ player.block_action(Actions::Tax);
 player.set_action_indicator(Actions::Sanction,true,this);
 
 
-if(this->has_extra_turn()){
-    this->clear_extra_turn();
-    return;
-}
 
-game.next_turn();
+
+
 }
 
 
@@ -238,13 +218,13 @@ game.next_turn();
 void General::coup(Player& player){
     
     if(game.current_player() != this){
-        std::cout <<"Not the General's turn\n";
-        return;
+        throw std::runtime_error("Not the General's turn");
     }
+
     handle_arrests();   
 
     if(!player.get_active()) 
-        throw std::runtime_error(player.get_name()+" is not active anymore");
+        throw std::runtime_error(player.get_name()+" Has been Couped");
 
     if(this == &player) 
         throw std::runtime_error("You cannot coup yourself");
@@ -267,12 +247,7 @@ void General::coup(Player& player){
     } else {
         std::cout << "🛡️ Coup against " << player.get_name() << " was prevented by a General." << std::endl;
     }
-    if(this->has_extra_turn()){
-        this->clear_extra_turn();
-        return;
-    }
 
-    game.next_turn();
 }
 
 
