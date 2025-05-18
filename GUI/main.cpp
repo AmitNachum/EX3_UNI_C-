@@ -163,7 +163,7 @@ int main() {
                     if (event.text.unicode == 8 && !humanName.empty()) {
                         humanName.pop_back();
                     } else if ((event.text.unicode == 13 || event.text.unicode == 10) && !humanName.empty()) {
-                        configs.push_back({humanName, ROLE_GOVERNOR, false});
+                        configs.push_back({humanName, ROLE_GENERAL, false});
                         typing = false;
                         msg.setString("Human player added: " + humanName);
                     } else if (event.text.unicode < 128 && humanName.length() < 20) {
@@ -192,6 +192,7 @@ int main() {
         }
 
         Player* current = game.current_player();
+        Player *human = nullptr;
 
         // AI TURN HANDLER
         if (current->is_AI()) {
@@ -212,6 +213,8 @@ int main() {
             } catch (const std::exception& e) {
                 msg.setString("AI error: " + std::string(e.what()));
             }
+            
+            game.next_turn();
             std::string winner = check_winner(game);
             if (!winner.empty()) {
                 msg.setString(winner + " - Game Over");
@@ -219,8 +222,6 @@ int main() {
                 window.display();
                 continue;
             }
-            game.next_turn();
-            continue;
         }
 
         actionButtons.clear();
@@ -236,20 +237,20 @@ int main() {
             startY += spacing;
         }
 
-        if (current->get_role_name() == "Baron") {
+        if (current->get_role_name() == "Baron" && !current->is_AI()) {
             actionButtons.emplace_back(600, startY, 150, 40, "Invest", font);
             startY += spacing;
         }
-        if (current->get_role_name() == "Governor") {
+        if (current->get_role_name() == "Governor" && !current->is_AI()) {
             actionButtons.emplace_back(600, startY, 150, 40, "Block Tax", font);
             startY += spacing;
         }
-        if (current->get_role_name() == "Spy") {
+        if (current->get_role_name() == "Spy" && !current->is_AI()) {
             actionButtons.emplace_back(600, startY, 150, 40, "Block Arrest", font);
             startY += spacing;
         }
 
-        // LEFT MOUSE CLICK DETECTION (only on release)
+        
         static bool wasPressed = false;
         bool nowPressed = sf::Mouse::isButtonPressed(sf::Mouse::Left);
         if (wasPressed && !nowPressed) {
@@ -290,13 +291,16 @@ int main() {
                         }
 
                         std::string winner = check_winner(game);
-                        if (!winner.empty()) {
-                            msg.setString(winner + " - Game Over");
-                            continue;
-                        }
 
                         if (current->has_extra_turn()) current->clear_extra_turn();
                         else game.next_turn();
+
+                         if (!winner.empty()) {
+                            msg.setString(winner + " - Game Over");
+                            window.draw(msg);
+                            window.display();
+                            continue;
+                        }
                     } catch (const std::exception& ex) {
                         msg.setString(ex.what());
                     }

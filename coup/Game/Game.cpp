@@ -162,38 +162,42 @@ void Game::notify_general_coup(Player &target, Player &executioner) {
 
 
         
-        else {
-            sf::RenderWindow window(sf::VideoMode(400, 200), "Prevent Coup?");
+               else {
+            sf::RenderWindow window(sf::VideoMode(400, 220), "Prevent Coup?");
+            window.setVisible(true);
+            window.requestFocus(); 
             sf::Font font;
-            if (!font.loadFromFile("arial.ttf")) {
-                std::cerr << "Error: could not load font (arial.ttf)\n";
+            if (!font.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")) {
+                std::cerr << "Error: could not load font (DejaVuSans)\n";
                 return;
             }
 
-
-            sf::Text info("General " + p->get_name() + ",\n" + executioner.get_name() + " is about to coup " + target.get_name(), font, 18);
+            sf::Text info("General " + p->get_name() + ",\n" + executioner.get_name() + " is about to coup " + target.get_name(), font, 16);
             info.setFillColor(sf::Color::White);
             info.setPosition(20, 10);
 
-            
-            sf::Text question("Prevent coup on " + target.get_name() + "?", font, 20);
+            sf::Text question("Prevent coup on " + target.get_name() + "?", font, 18);
             question.setFillColor(sf::Color::White);
-            question.setPosition(40, 40);
+            question.setPosition(40, 50);
+
+            sf::Text errorText("", font, 16);
+            errorText.setFillColor(sf::Color::Red);
+            errorText.setPosition(40, 90);  // Message will show here if error
 
             sf::Text yesText("Yes", font, 18);
             sf::Text noText("No", font, 18);
             yesText.setFillColor(sf::Color::Black);
             noText.setFillColor(sf::Color::Black);
-            yesText.setPosition(95, 130);
-            noText.setPosition(295, 130);
+            yesText.setPosition(95, 160);
+            noText.setPosition(295, 160);
 
             sf::RectangleShape yesButton(sf::Vector2f(100, 40));
             yesButton.setFillColor(sf::Color::Green);
-            yesButton.setPosition(70, 120);
+            yesButton.setPosition(70, 150);
 
             sf::RectangleShape noButton(sf::Vector2f(100, 40));
             noButton.setFillColor(sf::Color::Red);
-            noButton.setPosition(270, 120);
+            noButton.setPosition(270, 150);
 
             bool decisionMade = false;
             while (window.isOpen() && !decisionMade) {
@@ -205,9 +209,13 @@ void Game::notify_general_coup(Player &target, Player &executioner) {
                     if (event.type == sf::Event::MouseButtonPressed) {
                         sf::Vector2i mouse = sf::Mouse::getPosition(window);
                         if (yesButton.getGlobalBounds().contains(mouse.x, mouse.y)) {
-                            general->prevent_coup(target);
-                            decisionMade = true;
-                            window.close();
+                            try {
+                                general->prevent_coup(target);
+                                decisionMade = true;
+                                window.close();
+                            } catch (const std::exception& ex) {
+                                errorText.setString(ex.what());  // Show error in popup
+                            }
                         } else if (noButton.getGlobalBounds().contains(mouse.x, mouse.y)) {
                             decisionMade = true;
                             window.close();
@@ -216,7 +224,9 @@ void Game::notify_general_coup(Player &target, Player &executioner) {
                 }
 
                 window.clear(sf::Color::Black);
+                window.draw(info);
                 window.draw(question);
+                window.draw(errorText);
                 window.draw(yesButton);
                 window.draw(noButton);
                 window.draw(yesText);
