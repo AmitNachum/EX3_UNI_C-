@@ -52,6 +52,24 @@ struct Button {
     }
 };
 
+std::string check_winner(Game &game) {
+    int active_count = 0;
+    Player* last_active = nullptr;
+
+    for (Player* p : game.get_players()) {
+        if (p->get_active()) {
+            active_count++;
+            last_active = p;
+        }
+    }
+
+    if (active_count == 1 && last_active) {
+        return "Winner: " + last_active->get_name();
+    }
+
+    return "";
+}
+
 int main() {
     srand(static_cast<unsigned>(time(nullptr)));
 
@@ -103,6 +121,8 @@ int main() {
 
     std::vector<std::string> aiNames = {"Zeta", "Nova", "Orion", "Quasar", "Luna", "Astra"};
     std::vector<Roles> allRoles = {ROLE_GENERAL, ROLE_GOVERNOR, ROLE_BARON, ROLE_JUDGE, ROLE_MERCHANT, ROLE_SPY};
+
+    bool leftMouseReleased = true;
 
     while (window.isOpen()) {
         sf::Event event;
@@ -173,7 +193,7 @@ int main() {
 
         Player* current = game.current_player();
 
-        // AI TURN HANDLER with safeguards
+        // AI TURN HANDLER
         if (current->is_AI()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(800));
             Player* target = nullptr;
@@ -191,6 +211,13 @@ int main() {
                 aiMap[current]->favorite_action(current, *target);
             } catch (const std::exception& e) {
                 msg.setString("AI error: " + std::string(e.what()));
+            }
+            std::string winner = check_winner(game);
+            if (!winner.empty()) {
+                msg.setString(winner + " - Game Over");
+                window.draw(msg);
+                window.display();
+                continue;
             }
             game.next_turn();
             continue;
@@ -221,11 +248,15 @@ int main() {
             actionButtons.emplace_back(600, startY, 150, 40, "Block Arrest", font);
             startY += spacing;
         }
-        int target_index = 0;
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+
+        // LEFT MOUSE CLICK DETECTION (only on release)
+        static bool wasPressed = false;
+        bool nowPressed = sf::Mouse::isButtonPressed(sf::Mouse::Left);
+        if (wasPressed && !nowPressed) {
+            int target_index = 0;
             for (Player* p : game.get_players()) {
                 if (p != humanPlayer && p->get_active()) {
-                    sf::FloatRect targetRect(50, 100 + 50 * (target_index), 180, 40);
+                    sf::FloatRect targetRect(50, 100 + 50 * target_index, 180, 40);
                     if (targetRect.contains(static_cast<sf::Vector2f>(mousePos))) {
                         selectedTarget = p;
                     }
@@ -254,20 +285,25 @@ int main() {
                             if (!selectedTarget) throw std::runtime_error("No target selected for block");
                             if (current->get_role_name() != "Spy") throw std::runtime_error("Only Spy can block arrest");
                             dynamic_cast<Spy*>(current)->block_arrest(*selectedTarget);
-                        }
-                        else {
+                        } else {
                             throw std::runtime_error("Action not valid or no target selected.");
+                        }
+
+                        std::string winner = check_winner(game);
+                        if (!winner.empty()) {
+                            msg.setString(winner + " - Game Over");
+                            continue;
                         }
 
                         if (current->has_extra_turn()) current->clear_extra_turn();
                         else game.next_turn();
-
                     } catch (const std::exception& ex) {
                         msg.setString(ex.what());
                     }
                 }
             }
         }
+        wasPressed = nowPressed;
 
         sf::Text turnText("Turn: " + current->get_name(), font, 20);
         turnText.setPosition(20, 20);
