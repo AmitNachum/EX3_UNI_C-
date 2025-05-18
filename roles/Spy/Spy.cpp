@@ -46,9 +46,8 @@ void Spy::tax(){
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
     if(this->is_blocked(Actions::Tax)){
-        std::cout << "Tax is blocked to " + this->get_name() <<std::endl;
-        this->clear_blocked();
-        return;
+            throw std::runtime_error("Tax is blocked to "+ this->get_name());
+            this->clear_blocked();
     }   
 
 
@@ -99,7 +98,7 @@ void Spy::arrest(Player &player){
     if(this->get_coins() >= 10) 
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
-    if(this->has_already_arrested(player)) {
+    if(this->last_arrested_player == &player) {
         this->set_free_arrested(player);
         throw std::runtime_error(player.get_name() + " has already been arrested");
     }
@@ -123,6 +122,7 @@ void Spy::arrest(Player &player){
 
 player.reduce_coins(1);
 this->add_coins(1);
+last_arrested_player = &player;
 
 
 }

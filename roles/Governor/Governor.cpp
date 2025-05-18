@@ -38,9 +38,8 @@ void Governor::tax(){
         }
 
     if(this->is_blocked(Actions::Tax)){
-           throw std::runtime_error("Tax is blocked to "+ this->get_name());
+            throw std::runtime_error("Tax is blocked to "+ this->get_name());
             this->clear_blocked();
-            return;
     }      
 
     game.get_pool() -= 3;
@@ -87,13 +86,16 @@ void Governor::arrest(Player &player){
     if(game.current_player() != this) {
         throw std::runtime_error("Not the Governor's turn");
     }
-    if(this->has_already_arrested(player)) {
+
+    if(this->last_arrested_player == &player) {
         this->set_free_arrested(player);
         throw std::runtime_error(player.get_name() + " has already been arrested");
     }
 
-    if(this == &player)
-        throw std::runtime_error("You cannot arrest yourself");
+    if(this->last_arrested_player == &player) {
+        this->set_free_arrested(player);
+        throw std::runtime_error(player.get_name() + " has already been arrested");
+    }
 
     if(!player.get_active()){
         throw std::runtime_error(player.get_name() + " Has been Couped");
@@ -110,7 +112,7 @@ void Governor::arrest(Player &player){
 
     player.reduce_coins(1);
     this->add_coins(1);
-
+    last_arrested_player = &player;
 
 
 
@@ -208,4 +210,6 @@ Game& Governor::get_game(){
 
 void Governor::block_tax(Player &player){
     player.block_action(Actions::Tax);
+    std::cout << "Tax is blocked to " + player.get_name() << std::endl;
+    
 }

@@ -33,6 +33,7 @@ class Player{
     std::string name;
     std::vector<pair<bool,Player*>> actions_indicator;
     bool is_ai;
+    Player *last_arrested_player = nullptr;
 
     public:
 

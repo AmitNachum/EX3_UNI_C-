@@ -22,7 +22,7 @@ enum Roles {
 
 class FactoryPlayers {
 private:
-    FactoryPlayers() = default; // prevent instantiation
+    FactoryPlayers() = delete; // prevent instantiation
     FactoryPlayers(const FactoryPlayers&) = delete;
     FactoryPlayers& operator=(const FactoryPlayers&) = delete;
 

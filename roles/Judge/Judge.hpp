@@ -36,6 +36,7 @@ class Judge : public Player {
     
         this->get_action_indicator()[Sanction].second->set_has_extra_turn(false);
         std::cout << "Sanction has been canceled by the Judge" << std::endl;
+        this->clear_blocked();
     
         this->get_action_indicator()[Sanction] = {false, nullptr}; 
     }

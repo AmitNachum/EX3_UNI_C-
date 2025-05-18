@@ -58,9 +58,8 @@ void Merchant::tax(){
         return;
     }
     if(this->is_blocked(Actions::Tax)){
-            std::cout << "Tax is blocked to " + this->get_name() <<std::endl;
+            throw std::runtime_error("Tax is blocked to "+ this->get_name());
             this->clear_blocked();
-            return;
     }   
 
     handle_passive_effects();
@@ -117,7 +116,7 @@ void Merchant::arrest(Player &player){
        throw std::runtime_error("Not the Merchant's turn");
     }
 
-    if(this->has_already_arrested(player)) {
+    if(this->last_arrested_player == &player) {
         this->set_free_arrested(player);
         throw std::runtime_error(player.get_name() + " has already been arrested");
     }
@@ -137,6 +136,7 @@ void Merchant::arrest(Player &player){
 
 player.reduce_coins(1);
 this->add_coins(1);
+last_arrested_player = &player;
 
 
 

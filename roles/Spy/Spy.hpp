@@ -11,6 +11,7 @@ class Spy : public Player{
     private:
     Game &game;
     
+    
     public:
         Spy(const string& name, Game& game,bool is_ai):Player(name,is_ai),game(game){};
         Spy(Spy &other):Player(other),game(other.game){};

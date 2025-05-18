@@ -1,4 +1,4 @@
-// Place this in your GUI main file
+// Minimal Coup GUI - Cleaned and Refactored (Enhanced with Coin Display, Block Tax, Hover Highlight, AI and Human Turn Logic)
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -8,39 +8,18 @@
 #include "../coup/Role/Factory/Factory.hpp"
 #include "../coup/Role/Strategy/Strategy.hpp"
 #include <unordered_map>
-#include <chrono>
-#include <thread>
 #include <random>
+#include <thread>
+#include <chrono>
 
 const int WINDOW_WIDTH = 1000;
 const int WINDOW_HEIGHT = 700;
-
-
-void checkForWinner(Game& game, sf::Text& msg) {
-    int activeCount = 0;
-    Player* lastActive = nullptr;
-    for (Player* p : game.get_players()) {
-        if (p->get_active()) {
-            activeCount++;
-            lastActive = p;
-        }
-    }
-
-    if (activeCount == 1 && lastActive) {
-        msg.setString("Winner: " + lastActive->get_name());
-    }
-    
-}
-
-
 
 struct PlayerConfig {
     std::string name;
     Roles role;
     bool isAI;
 };
-
-Player *player = nullptr;
 
 struct Button {
     sf::RectangleShape shape;
@@ -73,454 +52,266 @@ struct Button {
     }
 };
 
-struct PlayerBox {
-    sf::RectangleShape box;
-    sf::Text nameText;
-    Player* player;
-
-    PlayerBox(float x, float y, const std::string& name, const sf::Font& font, Player* p)
-        : player(p)
-    {
-        box.setPosition(x, y);
-        box.setSize(sf::Vector2f(140, 50));
-        box.setFillColor(sf::Color(60, 60, 60));
-        box.setOutlineColor(sf::Color::White);
-        box.setOutlineThickness(2);
-
-        nameText.setFont(font);
-        nameText.setString(name);
-        nameText.setCharacterSize(16);
-        nameText.setFillColor(sf::Color::White);
-        nameText.setPosition(x + 10, y + 15);
-    }
-
-    bool isHovered(const sf::Vector2i& mousePos) const {
-        return box.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos));
-    }
-
-    void draw(sf::RenderWindow& win) const {
-        win.draw(box);
-        win.draw(nameText);
-    }
-};
-
-std::vector<std::string> aiNames = {"Zeta", "Nova", "Orion", "Quasar", "Luna", "Astra"};
-std::vector<Roles> allRoles = { ROLE_GENERAL, ROLE_GOVERNOR, ROLE_BARON, ROLE_JUDGE, ROLE_MERCHANT, ROLE_SPY };
-Player* spyTarget = nullptr;
-
 int main() {
-    srand(static_cast<unsigned>(time(nullptr))); 
-    
+    srand(static_cast<unsigned>(time(nullptr)));
 
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Coup GUI");
+    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Coup - Minimal GUI");
     sf::Font font;
     if (!font.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")) {
-        std::cerr << "Could not load font.\n";
+        std::cerr << "Could not load font." << std::endl;
         return 1;
     }
 
     sf::Texture backgroundTexture;
     if (!backgroundTexture.loadFromFile("GUI/Assets/background.png")) {
-        std::cerr << "Failed to load background image.\n";
+        std::cerr << "Failed to load background image." << std::endl;
         return 1;
     }
-    sf::Sprite backgroundSprite(backgroundTexture);
-
-    // Scale to fit window size
-    float scaleX = static_cast<float>(WINDOW_WIDTH) / backgroundTexture.getSize().x;
-    float scaleY = static_cast<float>(WINDOW_HEIGHT) / backgroundTexture.getSize().y;
-    backgroundSprite.setScale(scaleX, scaleY);
+    sf::Sprite background(backgroundTexture);
+    background.setScale(
+        float(WINDOW_WIDTH) / backgroundTexture.getSize().x,
+        float(WINDOW_HEIGHT) / backgroundTexture.getSize().y
+    );
 
     Game game;
+    std::vector<PlayerConfig> configs;
     std::vector<Player*> createdPlayers;
-    std::unordered_map<Player*, AIaction*> ai_map;
-    std::vector<Button> fixedButtons, targetButtons;
-    std::vector<PlayerBox> playerBoxes;
-    std::vector<PlayerConfig> playerConfigs;
-
-    Button addAI(100, 500, 250, 50, "Add AI Player", font);
-    Button addHuman(100, 570, 250, 50, "Add Human Player", font);
-    Button startGame(100, 640, 250, 50, "Start Game", font);
-    sf::Text msg("", font, 20); msg.setPosition(100, 450);
-    sf::RectangleShape inputBox(sf::Vector2f(200, 30));
-    inputBox.setPosition(400, 185);
-    sf::Text inputText("", font, 18); inputText.setPosition(405, 190); inputText.setFillColor(sf::Color::Black);
-
-    std::string humanName = "";
-    bool typingName = false, gameStarted = false;
+    std::unordered_map<Player*, AIaction*> aiMap;
+    Player* humanPlayer = nullptr;
     Player* selectedTarget = nullptr;
 
-    //fixedButtons.emplace_back(600, 100, 150, 40, "Tax", font);
-    //fixedButtons.emplace_back(600, 160, 150, 40, "Gather", font);
+    sf::Text msg("", font, 20);
+    msg.setPosition(20, 660);
 
+    std::vector<Button> menuButtons = {
+        Button(50, 500, 200, 40, "Add AI", font),
+        Button(50, 550, 200, 40, "Add Human", font),
+        Button(50, 600, 200, 40, "Start Game", font)
+    };
 
-    targetButtons.emplace_back(600, 250, 150, 40, "Coup", font);
-    targetButtons.emplace_back(600, 310, 150, 40, "Arrest", font);
-    targetButtons.emplace_back(600, 370, 150, 40, "Sanction", font);
-    targetButtons.emplace_back(600, 430, 150, 40, "Bribe", font);
+    std::vector<Button> actionButtons;
+
+    bool gameStarted = false;
+    bool typing = false;
+    std::string humanName = "";
+    sf::Text inputText("", font, 18);
+    inputText.setPosition(50, 450);
+    inputText.setFillColor(sf::Color::Black);
+    sf::RectangleShape inputBox(sf::Vector2f(200, 30));
+    inputBox.setPosition(45, 445);
+    inputBox.setFillColor(sf::Color::White);
+
+    std::vector<std::string> aiNames = {"Zeta", "Nova", "Orion", "Quasar", "Luna", "Astra"};
+    std::vector<Roles> allRoles = {ROLE_GENERAL, ROLE_GOVERNOR, ROLE_BARON, ROLE_JUDGE, ROLE_MERCHANT, ROLE_SPY};
 
     while (window.isOpen()) {
         sf::Event event;
         sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 
         while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) window.close();
+            if (event.type == sf::Event::Closed)
+                window.close();
 
             if (!gameStarted) {
                 if (event.type == sf::Event::MouseButtonPressed) {
-
-                    if (addAI.isHovered(mousePos) && playerConfigs.size() < 6) {
-
-                        std::string name = aiNames[playerConfigs.size() % aiNames.size()];
-                        playerConfigs.push_back({name, allRoles[rand() % allRoles.size()], true});
+                    if (menuButtons[0].isHovered(mousePos)) {
+                        std::string name = aiNames[configs.size() % aiNames.size()];
+                        configs.push_back({name, allRoles[rand() % allRoles.size()], true});
                         msg.setString("AI Player Added: " + name);
-                        
-                    } else if (addHuman.isHovered(mousePos)) {
-
-                        if (playerConfigs.size() < 6 && std::none_of(playerConfigs.begin(),
-                        playerConfigs.end(),
-                         [](const PlayerConfig& cfg) { return !cfg.isAI; })){
-
-                            typingName = true;
-                            msg.setString("Enter your name:");
-
-                        } 
-
-                        else {
-                            msg.setString("Only one human player allowed.");
-                        }
-
-
-                    } else if (startGame.isHovered(mousePos)) {
-                        if (playerConfigs.size() >= 2) {
-                            for (const auto& cfg : playerConfigs) {
-                                Player* p = FactoryPlayers::createPlayer(cfg.role, cfg.name, game, cfg.isAI);
-                                game.add_player(p);
-                                createdPlayers.push_back(p);
-                                if(!cfg.isAI) player = p;
-                                if (cfg.isAI) ai_map[p] = new AIaggresive();
-                            }
-                            for (size_t i = 0; i < createdPlayers.size(); ++i) {
-                                playerBoxes.emplace_back(100 + (i % 3) * 160, 500 + (i / 3) * 60,
-                                    createdPlayers[i]->get_name(), font, createdPlayers[i]);
-                            }
-                            gameStarted = true;
-                        } else {
-                            msg.setString("Need at least 2 players.");
-                        }
-                    }
-                }
-
-                if (typingName && event.type == sf::Event::TextEntered) {
-                    if (event.text.unicode == 8 && !humanName.empty()) humanName.pop_back();
-                    else if ((event.text.unicode == 13 || event.text.unicode == 10) && !humanName.empty()) {
-                        playerConfigs.push_back({humanName, allRoles[rand() % allRoles.size()], false});
-                        typingName = false;  
-                    } else if (event.text.unicode < 128 && humanName.length() < 20) {
-                        humanName += static_cast<char>(event.text.unicode);
-                    }
-                    inputText.setString(humanName);
-                }
-            }
-        }
-        
-
-        if (!gameStarted || game.get_players().empty()) {
-            window.clear();
-            window.draw(backgroundSprite);
-            for (auto* b : {&addAI, &addHuman, &startGame}) {
-                b->shape.setFillColor(b->isHovered(sf::Mouse::getPosition(window)) ? sf::Color(130, 130, 255) : sf::Color(100, 100, 250));
-                b->draw(window);
-            }
-            window.draw(msg);
-            if (typingName) {
-                window.draw(inputBox);
-                window.draw(inputText);
-            }
-            window.display();
-            continue;
-        }
-
-
-        
-            if (event.type == sf::Event::Closed) window.close();
-                        if (!gameStarted) {
-
-                    if (event.type == sf::Event::MouseButtonPressed) {
-
-                        if (addAI.isHovered(mousePos) && playerConfigs.size() < 6) {
-
-                        std::string name = aiNames[playerConfigs.size() % aiNames.size()];
-                        playerConfigs.push_back({name, allRoles[playerConfigs.size() % allRoles.size()], true});
-                        msg.setString("AI Player Added: " + name);
-
-
-                    } 
-                    
-                    else if (addHuman.isHovered(mousePos)) {
-
-                    if (playerConfigs.size() < 6 &&
-                    
-                        std::none_of(playerConfigs.begin(),
-                        playerConfigs.end(),
-                        [](const PlayerConfig& cfg) { return !cfg.isAI; })){
-                            typingName = true;
-                            msg.setString("Enter your name:");
-
-                            
+                    } else if (menuButtons[1].isHovered(mousePos)) {
+                        if (std::none_of(configs.begin(), configs.end(), [](const PlayerConfig& cfg) { return !cfg.isAI; })) {
+                            typing = true;
+                            msg.setString("Enter human name:");
                         } else {
                             msg.setString("Only one human player allowed.");
                         }
-                    }
-                    } else if (startGame.isHovered(mousePos)) {
-                        if (playerConfigs.size() >= 2) {
-                            for (const auto& cfg : playerConfigs) {
+                    } else if (menuButtons[2].isHovered(mousePos)) {
+                        if (configs.size() >= 2) {
+                            for (auto& cfg : configs) {
                                 Player* p = FactoryPlayers::createPlayer(cfg.role, cfg.name, game, cfg.isAI);
                                 game.add_player(p);
                                 createdPlayers.push_back(p);
-                                if (cfg.isAI) ai_map[p] = new AIaggresive();
-                            }
-                            for (size_t i = 0; i < createdPlayers.size(); ++i) {
-                                playerBoxes.emplace_back(100 + (i % 3) * 160, 500 + (i / 3) * 60,
-                                    createdPlayers[i]->get_name(), font, createdPlayers[i]);
+                                if (!cfg.isAI) humanPlayer = p;
+                                if (cfg.isAI) aiMap[p] = new AIaggresive();
                             }
                             gameStarted = true;
                         } else {
-                            msg.setString("Need at least 2 players.");
+                            msg.setString("Add at least 2 players.");
                         }
                     }
-                }
-
-                if (typingName && event.type == sf::Event::TextEntered) {
-                    if (event.text.unicode == 8 && !humanName.empty()) humanName.pop_back();
-                    else if ((event.text.unicode == 13 || event.text.unicode == 10) && !humanName.empty()) {
-                        playerConfigs.push_back({humanName, allRoles[playerConfigs.size() % allRoles.size()], false});
-                        typingName = false;
+                } else if (typing && event.type == sf::Event::TextEntered) {
+                    if (event.text.unicode == 8 && !humanName.empty()) {
+                        humanName.pop_back();
+                    } else if ((event.text.unicode == 13 || event.text.unicode == 10) && !humanName.empty()) {
+                        configs.push_back({humanName, ROLE_GOVERNOR, false});
+                        typing = false;
                         msg.setString("Human player added: " + humanName);
                     } else if (event.text.unicode < 128 && humanName.length() < 20) {
                         humanName += static_cast<char>(event.text.unicode);
                     }
                     inputText.setString(humanName);
-                    
-                }
-             else {
-                if (!game.is_human_turn()) {
-                    msg.setString("");
-                    std::this_thread::sleep_for(std::chrono::seconds(1));
-                    Player* current = game.current_player();
-
-                    if(game.game_over()){
-                        msg.setString("Game Over. Please restart. ");
-                    }
-
-                    fixedButtons.clear();
-                    fixedButtons.emplace_back(600, 100, 150, 40, "Tax", font);
-                    fixedButtons.emplace_back(600, 160, 150, 40, "Gather", font);
-
-                    Player* target = nullptr;
-                    for (Player* p : game.get_players()) {
-                        if (p != current && p->get_active()) {
-                            target = p;
-                            break;
-                        }
-                    }
-                    if (target){
-                        try{ai_map[current]->favorite_action(current, *target);}
-                        catch(const std::exception& ex){}
-                        
-                        game.next_turn();
-                    }
-                } else if (event.type == sf::Event::MouseButtonPressed) {
-                    Player* current = game.current_player();
-                   
-
-                    if(game.game_over()){
-                        msg.setString("Game Over. Please restart. ");
-                        continue;
-                    }
-
-
-                    fixedButtons.clear();
-                   
-                    fixedButtons.emplace_back(600, 100, 150, 40, "Tax", font);
-                    fixedButtons.emplace_back(600, 160, 150, 40, "Gather", font);
-
-                    if (current->get_role_name() == "Baron") {
-                        fixedButtons.emplace_back(600, 220, 150, 40, "Invest", font);
-                    }
-                    if(current->get_role_name() == "Governor"){
-                        fixedButtons.emplace_back(600,200,150,40,"Block tax",font);
-                    }
-      
-                    for (auto& box : playerBoxes) {
-                        if (box.isHovered(mousePos)) selectedTarget = box.player;
-                        if (current->get_role_name() == "Spy" && !current->is_AI()) {
-                            spyTarget = selectedTarget;
-                        }
-                        
-                    }
-                    for (auto& btn : fixedButtons) {
-                        if (btn.isHovered(mousePos)) {
-                            try {
-                                if(btn.label == "Block Tax"){
-                                    Governor *governor = dynamic_cast<Governor *>(current);
-                                    if(!governor) throw std::runtime_error("Only Governor can Block Tax");
-                                    if(!selectedTarget) throw std::runtime_error("Select a player first");
-                                    governor->block_tax(*selectedTarget);
-                                    msg.setString("Blocked Tax for " + selectedTarget->get_name());
-                                }
-                                if (btn.label == "Tax") {
-                                    current->tax();
-                                }
-                                else if (btn.label == "Gather"){
-                                    current->gather();
-                                }
-                                else if (btn.label == "Invest") {
-                                    Baron* baron = dynamic_cast<Baron*>(current);
-                                    if (baron) baron->invest();
-                                    else msg.setString("Only Barons can invest.");
-                                }
-
-                                checkForWinner(game, msg);
-                                if(current->has_extra_turn()){
-                                    current->clear_extra_turn();
-                                }
-                                else{
-                                    game.next_turn();
-                                }
-
-                                
-                            } catch (const std::exception& ex) {
-                                msg.setString(ex.what());
-                            }
-                            
-                        }
-                        msg.setString("");
-                    }
-                    for (auto& btn : targetButtons) {
-                        if (btn.isHovered(mousePos) && selectedTarget) {
-                            try {
-                                if (btn.label == "Coup"){ 
-                                    current->coup(*selectedTarget);
-                                    
-                            if (!selectedTarget->get_active()) {
-                                selectedTarget = nullptr;
-                            }
-                        }
-                            else if (btn.label == "Arrest") {
-                                current->arrest(*selectedTarget);   
-                             }
-
-                            else if (btn.label == "Sanction") {
-                                current->sanction(*selectedTarget);   
-                            }
-
-                            else if (btn.label == "Bribe"){
-                            current->bribe();
-                            
-                        }     
-                            checkForWinner(game, msg);
-                            if(current->has_extra_turn()){
-                            current->clear_extra_turn();
-                            }
-                            else{
-                                game.next_turn();
-                            }
-                            
-                            } catch (const std::exception& ex) {
-                                msg.setString(ex.what());
-                            }
-                            
-                        }
-                        msg.setString("");
-                    }
                 }
             }
-        
-
-                window.clear();
-                window.draw(backgroundSprite);
-
-                if (!gameStarted) {
-                    for (auto* b : {&addAI, &addHuman, &startGame}) {
-                    b->shape.setFillColor(b->isHovered(mousePos) ? sf::Color(130, 130, 255) : sf::Color(100, 100, 250));
-                    b->draw(window);
-                    }
-                window.draw(msg);
-
-                if (typingName) {
-                    window.draw(inputBox);
-                    window.draw(inputText);
-                    }
-        } else {
-            Player* current = game.current_player();
-            sf::Text turnText("Turn: " + current->get_name(), font, 20);
-            turnText.setPosition(20, 20);
-            fixedButtons.clear();
-            fixedButtons.emplace_back(600, 100, 150, 40, "Tax", font);
-            fixedButtons.emplace_back(600, 160, 150, 40, "Gather", font);
-            if (current->get_role_name() == "Baron") {
-                fixedButtons.emplace_back(600, 220, 150, 40, "Invest", font);
-            }
-            if(current->get_role_name() == "Governor"){
-                fixedButtons.emplace_back(600,220,150,40,"Blocked Tax",font);
-            }
-
-
-            
-                if(player){
-                sf::Text roleText("Role: " + player->get_role_name(), font, 20);
-                roleText.setFillColor(sf::Color::Cyan);
-                roleText.setPosition(WINDOW_WIDTH - 200, 20); // Top-right
-                window.draw(roleText);
-                sf::Text coinText("Coins: " + std::to_string(player->get_coins()), font, 20);
-                coinText.setFillColor(sf::Color::Yellow);
-                coinText.setPosition(WINDOW_WIDTH - 200, 50);
-                window.draw(coinText);
-                sf::Text coinCache("Coins Cache:", font, 20);
-                }
-            
-
-                
-            window.draw(turnText);
-
-            if (!current->is_AI()) {
-                sf::Text coinText("Coins: " + std::to_string(current->get_coins()), font, 20);
-                coinText.setFillColor(sf::Color::Yellow);
-                coinText.setPosition(650, 100);
-                window.draw(coinText);
-            }
-
-            for (auto& b : fixedButtons) {
-                b.shape.setFillColor(b.isHovered(mousePos) ? sf::Color::Green : sf::Color(100, 100, 250));
-                b.draw(window);
-            }
-
-            for (auto& b : targetButtons) {
-                b.shape.setFillColor((selectedTarget && b.isHovered(mousePos)) ? sf::Color::Red : sf::Color(80, 80, 180));
-                b.draw(window);
-            }
-
-            for (auto& pb : playerBoxes) {
-                pb.box.setFillColor(pb.isHovered(mousePos) ? sf::Color(180, 180, 60) : sf::Color(60, 60, 60));
-                pb.draw(window);
-            }
-
-            if (current->get_role_name() == "Spy" && !current->is_AI() && spyTarget && spyTarget->get_active()) {
-                sf::Text spyInfo("Spy Target: " + spyTarget->get_name() + " | Coins: " 
-                + std::to_string(spyTarget->get_coins()), font, 16);
-                spyInfo.setFillColor(sf::Color::Red);
-                spyInfo.setPosition(20, 650);
-                window.draw(spyInfo);
-            }
-            
-
-            window.draw(msg);
         }
 
+        window.clear();
+        window.draw(background);
+
+        if (!gameStarted) {
+            for (auto& b : menuButtons) {
+                b.shape.setFillColor(b.isHovered(mousePos) ? sf::Color(130, 130, 255) : sf::Color(100, 100, 250));
+                b.draw(window);
+            }
+            if (typing) {
+                window.draw(inputBox);
+                window.draw(inputText);
+            }
+            window.draw(msg);
+            window.display();
+            continue;
+        }
+
+        Player* current = game.current_player();
+
+        // AI TURN HANDLER with safeguards
+        if (current->is_AI()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(800));
+            Player* target = nullptr;
+            for (Player* p : game.get_players()) {
+                if (p != current && p->get_active()) {
+                    target = p;
+                    break;
+                }
+            }
+            try {
+                if (!target)
+                    throw std::runtime_error("AI has no valid target");
+                if (aiMap.find(current) == aiMap.end())
+                    throw std::runtime_error("AI map missing for current player");
+                aiMap[current]->favorite_action(current, *target);
+            } catch (const std::exception& e) {
+                msg.setString("AI error: " + std::string(e.what()));
+            }
+            game.next_turn();
+            continue;
+        }
+
+        actionButtons.clear();
+        int startY = 100;
+        int spacing = 60;
+
+        std::vector<std::string> labels = {
+            "Tax", "Gather", "Sanction", "Bribe", "Coup", "Arrest"
+        };
+
+        for (const std::string& label : labels) {
+            actionButtons.emplace_back(600, startY, 150, 40, label, font);
+            startY += spacing;
+        }
+
+        if (current->get_role_name() == "Baron") {
+            actionButtons.emplace_back(600, startY, 150, 40, "Invest", font);
+            startY += spacing;
+        }
+        if (current->get_role_name() == "Governor") {
+            actionButtons.emplace_back(600, startY, 150, 40, "Block Tax", font);
+            startY += spacing;
+        }
+        if (current->get_role_name() == "Spy") {
+            actionButtons.emplace_back(600, startY, 150, 40, "Block Arrest", font);
+            startY += spacing;
+        }
+        int target_index = 0;
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            for (Player* p : game.get_players()) {
+                if (p != humanPlayer && p->get_active()) {
+                    sf::FloatRect targetRect(50, 100 + 50 * (target_index), 180, 40);
+                    if (targetRect.contains(static_cast<sf::Vector2f>(mousePos))) {
+                        selectedTarget = p;
+                    }
+                    target_index++;
+                }
+            }
+            for (auto& btn : actionButtons) {
+                if (btn.isHovered(mousePos)) {
+                    try {
+                        if (btn.label == "Tax") current->tax();
+                        else if (btn.label == "Gather") current->gather();
+                        else if (btn.label == "Sanction" && selectedTarget) current->sanction(*selectedTarget);
+                        else if (btn.label == "Bribe") current->bribe();
+                        else if (btn.label == "Coup" && selectedTarget) current->coup(*selectedTarget);
+                        else if (btn.label == "Arrest" && selectedTarget) current->arrest(*selectedTarget);
+                        else if (btn.label == "Invest") {
+                            if (current->get_role_name() != "Baron") throw std::runtime_error("Only Barons can invest");
+                            dynamic_cast<Baron*>(current)->invest();
+                        }
+                        else if (btn.label == "Block Tax") {
+                            if (!selectedTarget) throw std::runtime_error("No target selected for block");
+                            if (current->get_role_name() != "Governor") throw std::runtime_error("Only Governor can block tax");
+                            dynamic_cast<Governor*>(current)->block_tax(*selectedTarget);
+                        }
+                        else if (btn.label == "Block Arrest") {
+                            if (!selectedTarget) throw std::runtime_error("No target selected for block");
+                            if (current->get_role_name() != "Spy") throw std::runtime_error("Only Spy can block arrest");
+                            dynamic_cast<Spy*>(current)->block_arrest(*selectedTarget);
+                        }
+                        else {
+                            throw std::runtime_error("Action not valid or no target selected.");
+                        }
+
+                        if (current->has_extra_turn()) current->clear_extra_turn();
+                        else game.next_turn();
+
+                    } catch (const std::exception& ex) {
+                        msg.setString(ex.what());
+                    }
+                }
+            }
+        }
+
+        sf::Text turnText("Turn: " + current->get_name(), font, 20);
+        turnText.setPosition(20, 20);
+        turnText.setFillColor(sf::Color::White);
+        window.draw(turnText);
+
+        if (humanPlayer) {
+            sf::Text roleText("Your Role: " + humanPlayer->get_role_name(), font, 20);
+            roleText.setPosition(WINDOW_WIDTH - 240, 20);
+            roleText.setFillColor(sf::Color::Cyan);
+            window.draw(roleText);
+
+            sf::Text coinText("Coin Pile: " + std::to_string(humanPlayer->get_coins()), font, 20);
+            coinText.setPosition(WINDOW_WIDTH - 240, 50);
+            coinText.setFillColor(sf::Color::Yellow);
+            window.draw(coinText);
+        }
+
+        int boxX = 50, boxY = 100, boxHeight = 40;
+        for (Player* p : game.get_players()) {
+            if (p != humanPlayer && p->get_active()) {
+                sf::RectangleShape box(sf::Vector2f(180, boxHeight));
+                box.setPosition(boxX, boxY);
+                box.setFillColor(box.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos)) ? sf::Color::Red : sf::Color(60, 60, 60));
+                box.setOutlineThickness(2);
+                box.setOutlineColor(sf::Color::White);
+                sf::Text nameText(p->get_name(), font, 18);
+                nameText.setPosition(boxX + 10, boxY + 8);
+                nameText.setFillColor(sf::Color::White);
+                window.draw(box);
+                window.draw(nameText);
+                boxY += boxHeight + 10;
+            }
+        }
+
+        for (auto& btn : actionButtons) {
+            btn.shape.setFillColor(btn.isHovered(mousePos) ? sf::Color::Green : sf::Color(100, 100, 250));
+            btn.draw(window);
+        }
+
+        window.draw(msg);
         window.display();
     }
 
-    for (auto& [k, v] : ai_map) delete v;
+    for (auto& [p, ai] : aiMap) delete ai;
     return 0;
 }
