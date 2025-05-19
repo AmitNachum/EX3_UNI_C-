@@ -4,8 +4,11 @@
 #define GAME_HPP
 #include "../Player/Player.hpp"
 #include "../../roles/General/General.hpp"
+#include "../../roles/Judge/Judge.hpp"
 #include <vector>
 #include <string>
+#include <chrono>
+#include <thread>
 
 using std::vector;
 
@@ -16,12 +19,19 @@ class Game{
     vector<Player*> players;
     size_t currentTurnIndex ;
     size_t coinPool;
+    Game();
+    Game(const Game& game) = delete;
+    Game operator=(const Game& game) = delete;
 
 
     public:
 
-    Game();
+    
     ~Game();
+    static Game& get_instance(){
+        static Game instance;
+        return instance;
+    }
 
 
     void add_player(Player* player);
@@ -35,6 +45,9 @@ class Game{
     size_t& get_pool();
     bool is_human_turn();
     bool game_over();
+    void notify_Judge_Bribe(Player &executioner);
+    void set_index_turn(Player *player);
+    void reset();
     
 
 

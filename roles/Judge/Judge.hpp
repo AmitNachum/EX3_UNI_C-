@@ -29,6 +29,7 @@ class Judge : public Player {
     void undo(Player &player) override;
     std::string get_role_name() const override;
     Game& get_game();
+    void block_Bribe();
 
 
     void handle_sanctions(){

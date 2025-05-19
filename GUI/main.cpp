@@ -1,4 +1,4 @@
-// Minimal Coup GUI - Cleaned and Refactored (Enhanced with Coin Display, Block Tax, Hover Highlight, AI and Human Turn Logic)
+// Mail: nachum.amit@msmail.ariel.ac.il
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -70,8 +70,17 @@ std::string check_winner(Game &game) {
     return "";
 }
 
+
+
+
+
+
+
 int main() {
     srand(static_cast<unsigned>(time(nullptr)));
+
+
+
 
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Coup - Minimal GUI");
     sf::Font font;
@@ -91,7 +100,7 @@ int main() {
         float(WINDOW_HEIGHT) / backgroundTexture.getSize().y
     );
 
-    Game game;
+    Game& game = Game::get_instance();
     std::vector<PlayerConfig> configs;
     std::vector<Player*> createdPlayers;
     std::unordered_map<Player*, AIaction*> aiMap;
@@ -154,6 +163,8 @@ int main() {
                                 if (!cfg.isAI) humanPlayer = p;
                                 if (cfg.isAI) aiMap[p] = new AIaggresive();
                             }
+                            game.set_index_turn(humanPlayer); 
+
                             gameStarted = true;
                         } else {
                             msg.setString("Add at least 2 players.");
@@ -163,7 +174,7 @@ int main() {
                     if (event.text.unicode == 8 && !humanName.empty()) {
                         humanName.pop_back();
                     } else if ((event.text.unicode == 13 || event.text.unicode == 10) && !humanName.empty()) {
-                        configs.push_back({humanName, ROLE_GENERAL, false});
+                        configs.push_back({humanName, allRoles[rand() % allRoles.size()], false});
                         typing = false;
                         msg.setString("Human player added: " + humanName);
                     } else if (event.text.unicode < 128 && humanName.length() < 20) {
@@ -249,6 +260,7 @@ int main() {
             actionButtons.emplace_back(600, startY, 150, 40, "Block Arrest", font);
             startY += spacing;
         }
+
 
         
         static bool wasPressed = false;

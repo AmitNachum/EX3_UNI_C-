@@ -51,9 +51,8 @@ void General::gather(){
 
 
     if(this->is_blocked(Actions::Gather)){
-            std::cout << "Gather is blocked to "+ this->get_name() <<std::endl;
             this->clear_blocked();
-            return;
+            throw std::runtime_error("Gather is blocked to "+ this->get_name());    
     }   
 
 
@@ -79,8 +78,8 @@ void General::tax(){
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
     if(this->is_blocked(Actions::Tax)){
-            throw std::runtime_error("Tax is blocked to "+ this->get_name());
             this->clear_blocked();
+            throw std::runtime_error("Tax is blocked to "+ this->get_name());  
     }   
 
     game.get_pool() -= 2;
@@ -113,13 +112,13 @@ void General::bribe(){
 
 
         if(this->is_blocked(Actions::Bribe)){
-            std::cout <<"Bribe has been Blocked to " + this->get_name()<<std::endl;
-            this->clear_blocked();
-            return;
+           this->clear_blocked();
+           throw std::runtime_error("Bribe has been Blocked to " + this->get_name()); 
         }
-        
+
 
         this->extra_turn = true;
+        game.notify_Judge_Bribe(*this);
 
 
 }
@@ -157,9 +156,9 @@ void General::arrest(Player &player){
         throw std::runtime_error(player.get_name() + " has no coins to steal");
 
     if(this->is_blocked(Actions::Arrest)){
-            std::cout <<"Arrest has been Blocked to " + this->get_name()<<std::endl;
             this->clear_blocked();
-            return;
+            throw std::runtime_error("Arrest has been Blocked to " + this->get_name());
+            
     }    
 
    

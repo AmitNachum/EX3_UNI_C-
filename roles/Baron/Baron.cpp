@@ -15,9 +15,8 @@ void Baron::gather(){
     }
 
     if(this->is_blocked(Actions::Gather)){
-            std::cout << "Gather is blocked to " + this->get_name() <<std::endl;
-            this->clear_blocked();
-            return;
+            this->clear_blocked();  
+            throw std::runtime_error("Gather is blocked to " + this->get_name());
     }   
     
 
@@ -40,8 +39,8 @@ void Baron::tax(){
     }
 
     if(this->is_blocked(Actions::Tax)){
-            throw std::runtime_error("Tax is blocked to "+ this->get_name());
             this->clear_blocked();
+            throw std::runtime_error("Tax is blocked to "+ this->get_name());   
     }   
 
 
@@ -76,14 +75,13 @@ void Baron::bribe(){
 
 
         if(this->is_blocked(Actions::Bribe)){
-            std::cout <<"Bribe has been Blocked "+ this->get_name()<<std::endl;
-            return;
+            this->clear_blocked();
+            throw std::runtime_error("Bribe has been Blocked "+ this->get_name());
         }
 
-
-
-
         this->extra_turn = true;
+        game.notify_Judge_Bribe(*this);
+        
   
 
 }
@@ -118,9 +116,8 @@ void Baron::arrest(Player &player){
     }
     
     if(this->is_blocked(Actions::Arrest)){
-            std::cout <<"Arrest has been Blocked "+ this->get_name()<<std::endl;
             this->clear_blocked();
-            return;
+            throw std::runtime_error("Arrest has been Blocked "+ this->get_name());
     }    
 
     this->handle_sanction_bonus();
@@ -235,8 +232,10 @@ void Baron::invest(){
 
     this->handle_sanction_bonus();
 
-    if(game.current_player() != this) 
+    if(game.current_player() != this){
         std::cout <<"Not the Baron's turn\n";
+        return;
+    }
 
     if (game.get_pool() < 3)
         throw std::runtime_error("Not enough coins in the pool to invest");

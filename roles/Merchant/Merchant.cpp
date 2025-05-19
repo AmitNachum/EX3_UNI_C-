@@ -35,9 +35,8 @@ void Merchant::gather(){
         return;
     }
     if(this->is_blocked(Actions::Gather)){
-            std::cout << "Gather is blocked to " + this->get_name() <<std::endl;
             this->clear_blocked();
-            return;
+            throw std::runtime_error("Gather is blocked to " + this->get_name());
     }   
 
     handle_passive_effects();
@@ -58,8 +57,9 @@ void Merchant::tax(){
         return;
     }
     if(this->is_blocked(Actions::Tax)){
-            throw std::runtime_error("Tax is blocked to "+ this->get_name());
             this->clear_blocked();
+            throw std::runtime_error("Tax is blocked to "+ this->get_name());
+           
     }   
 
     handle_passive_effects();
@@ -85,9 +85,8 @@ void Merchant::bribe(){
         throw std::runtime_error("Not enough Money to bribe");
 
     if(this->is_blocked(Actions::Bribe)){
-            std::cout <<"Bribe has been Blocked to " + this->get_name()<<std::endl;
             this->clear_blocked();
-            return;
+            throw std::runtime_error("Bribe has been Blocked to " + this->get_name());
         }
         
     handle_passive_effects();
@@ -97,7 +96,10 @@ void Merchant::bribe(){
 
 
 
-    this->extra_turn = true;
+
+
+        this->extra_turn = true;
+        game.notify_Judge_Bribe(*this);
 
 
   
@@ -122,7 +124,7 @@ void Merchant::arrest(Player &player){
     }
 
     if(this == &player)
-        throw std::runtime_error("You cannot sanction yourself"); 
+        throw std::runtime_error("You cannot Arrest yourself"); 
 
     if (player.get_coins() < 1) 
         throw std::runtime_error(player.get_name() + " has no coins to steal");

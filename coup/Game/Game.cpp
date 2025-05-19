@@ -235,7 +235,7 @@ void Game::notify_general_coup(Player &target, Player &executioner) {
             }
         }
     }
-}
+} 
 
 
 bool Game::is_human_turn(){
@@ -254,3 +254,121 @@ bool Game::game_over()
 
     return alive <= 1;
 }
+void Game::notify_Judge_Bribe(Player &executioner) {
+    for (auto* player : this->players) {
+        if (!player->get_active()) continue;
+        if (player->get_role_name() != "Judge") continue;
+        if (player == &executioner) continue;
+
+        Judge* judge = dynamic_cast<Judge*>(player);
+        if (!judge) continue;
+
+        if (judge->is_AI()) {
+            int choice = rand() % 2;
+            if (choice == 1) {
+                executioner.set_has_extra_turn(false);
+                std::cout << judge->get_name() << " (AI) has canceled the executioner's extra turn." << std::endl;
+            } else {
+                std::cout << judge->get_name() << " (AI) allowed the extra turn." << std::endl;
+            }
+        } else {
+            // HUMAN Judge - Show pop-up window
+            sf::RenderWindow window(sf::VideoMode(400, 200), "Cancel Extra Turn?");
+            window.setVisible(true);
+            window.requestFocus();
+
+            sf::Font font;
+            if (!font.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")) {
+                std::cerr << "Error: could not load font (DejaVuSans)\n";
+                return;
+            }
+
+            sf::Text question("Cancel extra turn for " + executioner.get_name() + "?", font, 18);
+            question.setFillColor(sf::Color::White);
+            question.setPosition(40, 40);
+
+            sf::Text yesText("Yes", font, 18);
+            sf::Text noText("No", font, 18);
+            yesText.setFillColor(sf::Color::Black);
+            noText.setFillColor(sf::Color::Black);
+            yesText.setPosition(95, 130);
+            noText.setPosition(295, 130);
+
+            sf::RectangleShape yesButton(sf::Vector2f(100, 40));
+            yesButton.setFillColor(sf::Color::Green);
+            yesButton.setPosition(70, 120);
+
+            sf::RectangleShape noButton(sf::Vector2f(100, 40));
+            noButton.setFillColor(sf::Color::Red);
+            noButton.setPosition(270, 120);
+
+            sf::Text resultText("", font, 16);
+            resultText.setFillColor(sf::Color::White);
+            resultText.setPosition(20, 90);
+
+            bool decisionMade = false;
+            bool displayResult = false;
+
+            while (window.isOpen()) {
+                sf::Event event;
+                while (window.pollEvent(event)) {
+                    if (event.type == sf::Event::Closed) {
+                        window.close();
+                        return;
+                    }
+
+                    if (event.type == sf::Event::MouseButtonPressed && !decisionMade) {
+                        sf::Vector2i mouse = sf::Mouse::getPosition(window);
+                        if (yesButton.getGlobalBounds().contains(mouse.x, mouse.y)) {
+                            executioner.set_has_extra_turn(false);
+                            resultText.setString(judge->get_name() + " the Judge has canceled " + executioner.get_name() + "'s extra turn");
+                            displayResult = true;
+                            decisionMade = true;
+                        } else if (noButton.getGlobalBounds().contains(mouse.x, mouse.y)) {
+                            resultText.setString(judge->get_name() + " the Judge allowed " + executioner.get_name() + "'s extra turn");
+                            displayResult = true;
+                            decisionMade = true;
+                        }
+                    }
+                }
+
+                window.clear(sf::Color::Black);
+                window.draw(question);
+                window.draw(yesButton);
+                window.draw(noButton);
+                window.draw(yesText);
+                window.draw(noText);
+                if (displayResult) window.draw(resultText);
+                window.display();
+
+                if (displayResult) {
+                    std::this_thread::sleep_for(std::chrono::seconds(2));
+                    window.close();
+                }
+            }
+        }
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+}
+
+void Game::set_index_turn(Player *player){
+    if(this->players.empty()) return;
+
+    for(long unsigned int i = 0 ; i < players.size() ; i++){
+        if(!player[i].is_AI()){
+            currentTurnIndex = i;
+            return;
+        }
+    }
+}
+
+void Game::reset() {
+    for (Player* p : players) {
+        delete p;
+    }
+    players.clear();
+    currentTurnIndex = 0;
+    coinPool = 50;
+}
+

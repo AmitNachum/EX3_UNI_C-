@@ -1,35 +1,34 @@
 #include "../coup/Game/Game.hpp"
 #include "../roles/Governor/Governor.hpp"
-#include "../roles/Merchant/Merchant.hpp"
+#include "../roles/Judge/Judge.hpp"
 #include <iostream>
-#include <memory>
 
 int main() {
-    Game game;
+    Game& game = Game::get_instance();
 
-    // Create Governor and Merchant
+    // Create players
     Governor* gov = new Governor("GovernorPlayer", game, false);
-    Merchant* merchant = new Merchant("MerchantPlayer", game, false);
+    Judge* judge = new Judge("JudgePlayer", game, true);  // AI judge (to auto decide)
 
-    // Add to game
+    // Add players to the game
     game.add_player(gov);
-    game.add_player(merchant);
+    game.add_player(judge);
 
-    // Set Governor as current player (if needed)
-    // game.force_set_current_player(gov);  // Only if you have a setter
+    // Give the governor some coins
+    gov->add_coins(4);  // Bribe requires 4 coins
 
-    std::cout << "Merchant coins before tax: " << merchant->get_coins() << std::endl;
+    // Print initial state
+    std::cout << gov->get_name() << " coins before bribe: " << gov->get_coins() << std::endl;
+    std::cout << "Extra turn flag before bribe: " << (gov->has_extra_turn() ? "true" : "false") << std::endl;
 
-    // Governor blocks Merchant
-    gov->block_tax(*merchant);
+    try {
+        gov->bribe();  // This will trigger notify_Judge_Bribe
+    } catch (const std::exception& e) {
+        std::cerr << "Bribe failed: " << e.what() << std::endl;
+    }
 
-    // Merchant tries to tax
-    merchant->tax();
-
-    std::cout << "Merchant coins after tax: " << merchant->get_coins() << std::endl;
-
-    // Expectation: coins should NOT have increased if block_tax worked
-
+    std::cout << gov->get_name() << " coins after bribe: " << gov->get_coins() << std::endl;
+    std::cout << "Extra turn flag after bribe: " << (gov->has_extra_turn() ? "true" : "false") << std::endl;
 
     return 0;
 }
