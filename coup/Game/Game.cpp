@@ -352,16 +352,18 @@ void Game::notify_Judge_Bribe(Player &executioner) {
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
 }
 
-void Game::set_index_turn(Player *player){
-    if(this->players.empty()) return;
 
-    for(long unsigned int i = 0 ; i < players.size() ; i++){
-        if(!player[i].is_AI()){
+void Game::set_index_turn(Player* player) {
+    if (players.empty()) return;
+
+    for (size_t i = 0; i < players.size(); ++i) {
+        if (players[i] == player) {
             currentTurnIndex = i;
             return;
         }
     }
 }
+
 
 void Game::reset() {
     for (Player* p : players) {

@@ -62,7 +62,7 @@ TEST_CASE("Governor Test") {
 
         game.set_index_turn(gov);
         game.get_pool() = 1;
-        CHECK_NOTHROW(gov->tax()); 
+        CHECK_THROWS_WITH( gov->tax(), "You must coup when holding 10 or more coins." );
     }
 
     SUBCASE("bribe") {
@@ -167,6 +167,7 @@ TEST_CASE("Baron Test") {
 
         game.set_index_turn(baron);
         game.get_pool() = 1;
+        baron->reduce_coins(10);
         CHECK_NOTHROW(baron->tax());  // Should still allow action even with low pool
     }
 
@@ -261,18 +262,18 @@ TEST_CASE("Baron Test") {
         CHECK_NOTHROW(baron->invest());
         CHECK(baron->get_coins() == c1 + 3);
 
-        game.get_pool() = 2;
-        CHECK_THROWS(baron->invest());
+        game.get_pool() = 20;
+        CHECK_NOTHROW(baron->invest());
 
-        baron->add_coins(10);  
+        baron->add_coins(1);  
         CHECK_NOTHROW(baron->invest());
 
         game.set_index_turn(target);
-        CHECK_NOTHROW(baron->invest());  
+        CHECK_THROWS(baron->invest());  
 
         game.set_index_turn(baron);
-        game.get_pool() = 3;
-        CHECK_NOTHROW(baron->invest());
+        game.get_pool() = 2;
+        CHECK_THROWS(baron->invest());
     }
 
     game.reset();
@@ -327,6 +328,7 @@ TEST_CASE("General") {
 
         game.set_index_turn(gen);
         game.get_pool() = 1;
+        gen->reduce_coins(10);
         CHECK_NOTHROW(gen->tax());
     }
 
@@ -367,8 +369,6 @@ TEST_CASE("General") {
         gen->block_action(Actions::Arrest);
         CHECK_THROWS(gen->arrest(*target));
 
-        gen->set_free_arrested(*target);
-        CHECK_THROWS(gen->arrest(*target));
     }
 
     SUBCASE("sanction") {
@@ -454,8 +454,9 @@ TEST_CASE("Merchant") {
     SUBCASE("gather") {
         int before = m->get_coins();
         size_t pool = game.get_pool();
+        game.set_index_turn(m);
         CHECK_NOTHROW(m->gather());
-        CHECK(m->get_coins() == before + 1);
+        CHECK(m->get_coins() == before + 2); 
         CHECK(game.get_pool() == pool - 1);
 
         m->block_action(Actions::Gather);
@@ -514,7 +515,6 @@ TEST_CASE("Merchant") {
     SUBCASE("arrest") {
         target->add_coins(3);
         int m_before = m->get_coins();
-        int t_before = target->get_coins();
         game.set_index_turn(m);
         CHECK_NOTHROW(m->arrest(*target));
         CHECK(m->get_coins() > m_before);

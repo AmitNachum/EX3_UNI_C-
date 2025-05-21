@@ -1,4 +1,5 @@
-#
+# Mail: nachum.amit@msmail.ariel.ac.il
+
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic -g
 

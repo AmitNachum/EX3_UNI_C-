@@ -156,15 +156,21 @@ int main() {
                         }
                     } else if (menuButtons[2].isHovered(mousePos)) {
                         if (configs.size() >= 2) {
+                            Player *first_turn_ai = nullptr;
                             for (auto& cfg : configs) {
                                 Player* p = FactoryPlayers::createPlayer(cfg.role, cfg.name, game, cfg.isAI);
                                 game.add_player(p);
                                 createdPlayers.push_back(p);
                                 if (!cfg.isAI) humanPlayer = p;
                                 if (cfg.isAI) aiMap[p] = new AIaggresive();
+                                first_turn_ai = p;
                             }
+                            if(humanPlayer){
                             game.set_index_turn(humanPlayer); 
-
+                            }
+                            else{
+                                game.set_index_turn(first_turn_ai);
+                            }
                             gameStarted = true;
                         } else {
                             msg.setString("Add at least 2 players.");

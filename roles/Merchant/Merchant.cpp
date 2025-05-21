@@ -53,8 +53,8 @@ void Merchant::tax(){
         throw std::runtime_error("You must coup when holding 10 or more coins.");
 
     if(game.current_player() != this){
-        std::cout<<"Not the Merchant's turn\n";
-        return;
+       throw std::runtime_error("Not the Merchant's turn");
+       
     }
     if(this->is_blocked(Actions::Tax)){
             this->clear_blocked();
@@ -184,8 +184,8 @@ player.set_action_indicator(Actions::Sanction,true,this);
 void Merchant::coup(Player& player){
     
      if(game.current_player() != this){
-        std::cout<<"Not the Merchant's turn\n";
-        return;
+        throw std::runtime_error("Not the Merchant's turn");
+        
     }
 
     if(!player.get_active()) 

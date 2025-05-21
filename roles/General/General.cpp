@@ -129,7 +129,10 @@ void General::bribe(){
 void General::arrest(Player &player){
 
      if(game.current_player() != this){
-        throw std::runtime_error("Not the General's turn\n");
+        throw std::runtime_error("Not the General's turn");
+    }
+    if(&player == this){
+        throw std::runtime_error("You cannot arrest yourself");
     }
 
     handle_arrests();
@@ -177,8 +180,7 @@ last_arrested_player = &player;
 
 void General::sanction(Player &player){
      if(game.current_player() != this){
-        std::cout <<"Not the General's turn\n";
-        return;
+        throw std::runtime_error("Not the General's turn");
     }
     handle_arrests();
 

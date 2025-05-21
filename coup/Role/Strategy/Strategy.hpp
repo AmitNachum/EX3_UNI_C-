@@ -1,3 +1,5 @@
+// Mail: nachum.amit@msmail.ariel.ac.il
+
 #ifndef STRATEGY_HPP
 #define STRATEGY_HPP
 #include "../../Player/Player.hpp"

@@ -233,8 +233,8 @@ void Baron::invest(){
     this->handle_sanction_bonus();
 
     if(game.current_player() != this){
-        std::cout <<"Not the Baron's turn\n";
-        return;
+        throw std::runtime_error("Not the Baron's turn\n");
+       
     }
 
     if (game.get_pool() < 3)

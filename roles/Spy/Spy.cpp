@@ -1,5 +1,6 @@
-#include "Spy.hpp"
+
 // Mail: nachum.amit@msmail.ariel.ac.il
+#include "Spy.hpp"
 string Spy::view_pile(Player &player){
     int other_coin_amount = player.get_coins();
     return player.get_name() + " has: " + std::to_string(other_coin_amount) + " coins";

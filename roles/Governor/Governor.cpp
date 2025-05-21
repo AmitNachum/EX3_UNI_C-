@@ -88,6 +88,10 @@ void Governor::arrest(Player &player){
         this->set_free_arrested(player);
         throw std::runtime_error(player.get_name() + " has already been arrested");
     }
+    if (&player == this) {
+    throw std::runtime_error("Cannot arrest yourself.");
+    }
+
 
     if(!player.get_active()){
         throw std::runtime_error(player.get_name() + " Has been Couped");

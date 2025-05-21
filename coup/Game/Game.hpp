@@ -46,8 +46,8 @@ class Game{
     bool is_human_turn();
     bool game_over();
     void notify_Judge_Bribe(Player &executioner);
-    void set_index_turn(Player *player);
     void reset();
+    void set_index_turn(Player *player);
     
 
 

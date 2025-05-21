@@ -1,0 +1,243 @@
+Me:
+ok Please provide a main function that has a simulation of turns using 
+threads and chrono libs.
+
+make sure it still long enough as well as making sure that you do 
+not delete the players due to the destructor handling it
+
+
+
+
+ChatGPT:
+Got it, chief — you want a simulation where players randomly perform 
+real Coup-style actions like gather, tax, coup, arrest, etc., in turns across multiple rounds.
+
+Ill give you a complete main() program that:
+
+Uses Game::get_instance()
+
+Has 4 players (2 AI Barons, 2 AI Governors)
+
+Randomly picks a valid action for the current player
+
+Simulates multiple rounds
+
+Uses std::thread and std::chrono for pacing
+
+Does not delete players manually — assumes Game handles cleanup
+
+✅ Final main.cpp Simulation Example
+cpp
+Copy
+Edit
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+#include "../../Game/Game.hpp"
+#include "../../Player/Player.hpp"
+#include "../roles/Baron/Baron.hpp"
+#include "../roles/Governor/Governor.hpp"
+
+using namespace std;
+using namespace chrono;
+
+void simulate_turn(Player* player, Game& game) {
+    vector<string> actions = {"gather", "tax", "coup", "sanction", "bribe", "arrest"};
+    srand(time(nullptr) + reinterpret_cast<uintptr_t>(player)); // unique seed per player
+
+    // Find a valid target for actions like coup/arrest/sanction
+    Player* target = nullptr;
+    for (Player* p : game.get_players()) {
+        if (p != player && p->is_active()) {
+            target = p;
+            break;
+        }
+    }
+
+    // Retry random action selection until something valid is chosen
+    for (int attempts = 0; attempts < 10; ++attempts) {
+        string action = actions[rand() % actions.size()];
+
+        try {
+            if (action == "gather") {
+                player->gather();
+                cout << "[ACTION] " << player->get_name() << " gathered." << endl;
+                break;
+            }
+            else if (action == "tax") {
+                player->tax();
+                cout << "[ACTION] " << player->get_name() << " taxed." << endl;
+                break;
+            }
+            else if (action == "coup" && target) {
+                player->coup(*target);
+                cout << "[ACTION] " << player->get_name() << " couped " << target->get_name() << "." << endl;
+                break;
+            }
+            else if (action == "sanction" && target) {
+                player->sanction(*target);
+                cout << "[ACTION] " << player->get_name() << " sanctioned " << target->get_name() << "." << endl;
+                break;
+            }
+            else if (action == "bribe" && target) {
+                player->bribe(*target);
+                cout << "[ACTION] " << player->get_name() << " bribed " << target->get_name() << "." << endl;
+                break;
+            }
+            else if (action == "arrest" && target) {
+                player->arrest(*target);
+                cout << "[ACTION] " << player->get_name() << " arrested " << target->get_name() << "." << endl;
+                break;
+            }
+        } catch (const exception& e) {
+            cout << "[EXCEPTION] " << player->get_name() << ": " << e.what() << endl;
+        }
+    }
+}
+
+int main() {
+    Game& game = Game::get_instance();
+
+    // Create players
+    Player* baron1 = new Baron(game, "Baron_1");
+    Player* governor1 = new Governor(game, "Governor_1");
+    Player* baron2 = new Baron(game, "Baron_2");
+    Player* governor2 = new Governor(game, "Governor_2");
+
+    // Add to game
+    game.add_player(baron1);
+    game.add_player(governor1);
+    game.add_player(baron2);
+    game.add_player(governor2);
+
+    cout << "🔁 Starting full simulation of Coup turns 🔁" << endl;
+
+    const int rounds = 5;
+    for (int r = 1; r <= rounds; ++r) {
+        cout << "\n====== ROUND " << r << " ======" << endl;
+
+        for (size_t i = 0; i < game.get_players().size(); ++i) {
+            Player* current = game.current_player();
+
+            if (!current->is_active()) {
+                cout << "[SKIP] " << current->get_name() << " is inactive." << endl;
+                game.next_turn();
+                continue;
+            }
+
+            cout << "\n[TURN] " << current->get_name() << "'s turn:" << endl;
+            this_thread::sleep_for(seconds(1));
+
+            simulate_turn(current, game);
+
+            this_thread::sleep_for(milliseconds(500));
+            game.next_turn();
+        }
+
+        this_thread::sleep_for(seconds(1));
+    }
+
+    cout << "\n✅ Simulation ended.\n" << endl;
+    return 0;
+}
+🧠 Notes:
+Players randomly choose actions — but actions that need targets are skipped if no target is available or if an error is thrown.
+
+Uses reinterpret_cast to vary random seed per player.
+
+No need to delete any player — Game manages that.
+
+You can tweak number of rounds, pause delays, etc.
+
+Let me know if youd like:
+
+More complex AI logic
+
+Logging to file
+
+Thread-per-player model (concurrent instead of turn-based)
+
+
+
+
+Me:
+ok Please provide a main function that has a simulation 
+of turns using threads and chrono libs.
+
+make sure it still long enough as well as making sure 
+that you do not delete the players due to the destructor handling it
+
+
+ChatGPT:
+
+✅ Exactly!
+You finally got it.
+
+💡 Why does it disappear?
+Because anything created inside the else {} block is recreated only when it's the human turn.
+
+When it's AI's turn, your code doesn't enter that else block, so the buttons inside it don't exist anymore, unless you keep them global and separate.
+
+🎯 Correct approach for your intention:
+Create the button globally once (like your targetButtons).
+
+Draw it always, but conditionally visible if the player (human or AI) is a Governor or Baron.
+
+This ensures it never disappears, but you can still control when to show it by checking the current player or game state.
+
+✅ Example clean approach
+1. Define it globally once:
+cpp
+Copy
+Edit
+Button blockTaxButton(800, 100, 150, 40, "Block Tax", font);
+2. In the render phase, always draw it but conditionally:
+cpp
+Copy
+Edit
+Player* current = game.current_player();
+if (current->get_role_name() == "Governor") {
+    blockTaxButton.draw(window);
+}
+3. In mouse click event, always check for it:
+cpp
+Copy
+Edit
+if (blockTaxButton.isHovered(mousePos)) {
+    Governor* governor = dynamic_cast<Governor*>(current);
+    if (!governor) msg.setString("Only Governor can Block Tax");
+    else if (!selectedTarget) msg.setString("Select a player first");
+    else {
+        governor->block_tax(*selectedTarget);
+        msg.setString("Blocked Tax for " + selectedTarget->get_name());
+    }
+}
+✅ General rule to remember:
+| Created outside else (globally like targetButtons) | Always exists, you can control its draw condition and click condition separately. |
+| Created inside else | Exists only when it's human's turn. |
+
+🔥 YES — You can decide to draw the button only if the current player is Governor, even if it's AI.
+This way:
+
+Button always exists (so it won't disappear).
+
+You control its visibility and interaction yourself.
+
+Would you also like me to show you a simple code snippet that does this for both Invest and Block Tax?
+If yes, say "YES dual example."
+
+
+
+
+
+
+
+
+
+
+
+
+
